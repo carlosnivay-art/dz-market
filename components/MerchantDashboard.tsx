@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { 
-  Plus, Package, TrendingUp, Users, DollarSign, Edit, Trash2, Share2, Camera, Link as LinkIcon 
+  Plus, Package, TrendingUp, Users, DollarSign, Edit, Trash2, Share2, Camera, Link as LinkIcon, Video, Radio
 } from 'lucide-react';
 import { SalesData } from '../types';
 
@@ -20,8 +20,6 @@ const mockSalesData: SalesData[] = [
 const MerchantDashboard: React.FC = () => {
   const sellerId = "dz_market_seller_2024";
   const profileLink = `https://dz-market.dz/shop/${sellerId}`;
-
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', desc: '' });
 
   return (
     <div className="space-y-8 pb-20 animate-in fade-in duration-700">
@@ -51,8 +49,24 @@ const MerchantDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Add Product Section */}
+        {/* Go Live & Add Product Section */}
         <div className="lg:col-span-1 space-y-6">
+          {/* LIVE BROADCAST BUTTON */}
+          <div className="bg-red-50 border-2 border-red-100 p-6 rounded-3xl shadow-sm relative overflow-hidden group">
+             <div className="relative z-10">
+               <div className="flex items-center gap-2 text-red-600 mb-4">
+                 <Radio size={20} className="animate-pulse" />
+                 <span className="font-black text-sm uppercase tracking-wider">بث مباشر الآن</span>
+               </div>
+               <h3 className="text-xl font-black text-gray-800 mb-2">اعرض منتجاتك لايف!</h3>
+               <p className="text-xs text-gray-500 mb-6 leading-relaxed">تواصل مع زبائنك مباشرة، قدم خصومات فورية، وزد مبيعاتك بنسبة 40%.</p>
+               <button className="w-full bg-red-600 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg shadow-red-200 hover:scale-[1.02] active:scale-95 transition-all">
+                  <Video size={20} /> ابدأ البث المباشر
+               </button>
+             </div>
+             <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-red-100 rounded-full opacity-50 group-hover:scale-150 transition-transform"></div>
+          </div>
+
           <div className="bg-white p-6 rounded-3xl shadow-sm border">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
               <Plus className="text-dz-orange" /> إضافة منتج جديد
@@ -119,7 +133,7 @@ const MerchantDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow-sm border h-[300px]">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border h-[400px]">
              <h3 className="font-bold mb-4">إحصائيات المبيعات</h3>
              <ResponsiveContainer width="100%" height="100%">
               <BarChart data={mockSalesData}>

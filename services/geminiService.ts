@@ -2,7 +2,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { Product } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const chatWithProductAI = async (message: string, product: Product) => {
   try {
@@ -26,6 +27,7 @@ export const chatWithProductAI = async (message: string, product: Product) => {
         5. لا تخترع معلومات غير موجودة عن المنتج.`,
       }
     });
+    // The simplest and most direct way to get the generated text content is by accessing the .text property.
     return response.text;
   } catch (error) {
     return "عذراً، البائع غير متاح حالياً، هل يمكنك تكرار سؤالك؟";
@@ -41,6 +43,7 @@ export const generalAIChat = async (message: string) => {
         systemInstruction: "أنت مساعد سوق DZ Market. ساعد المستخدمين في العثور على المنتجات وشرح كيفية عمل المنصة للباعة والمشترين في الجزائر.",
       }
     });
+    // The simplest and most direct way to get the generated text content is by accessing the .text property.
     return response.text;
   } catch (error) {
     return "مرحباً! كيف يمكنني مساعدتك في سوق DZ Market اليوم؟";

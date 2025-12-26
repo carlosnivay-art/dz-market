@@ -13,7 +13,8 @@ export interface Product {
   price: number;
   oldPrice?: number;
   category: string;
-  image: string;
+  image: string; // Keep for compatibility or as featured image
+  images: string[]; // Array for gallery
   rating: number;
   reviewsCount: number;
   sellerId: string;

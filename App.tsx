@@ -1,19 +1,97 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ShoppingBag, Search, User, Menu, MessageSquare, Store, Home, 
-  X, Star, Send, ArrowRight, Share2, Plus, Bell
+  X, Star, Send, ArrowRight, Share2, Plus, Bell, ChevronLeft, ChevronRight, ZoomIn, Truck, Video
 } from 'lucide-react';
 import { Product, User as UserType, Comment } from './types';
 import { MOCK_PRODUCTS, WILAYAS, COLORS } from './constants';
 import MerchantDashboard from './components/MerchantDashboard';
 import ProductCard from './components/ProductCard';
 import ChatSystem from './components/ChatSystem';
+import WelcomeScreen from './components/WelcomeScreen';
+import PaymentScreen from './components/PaymentScreen';
+import LiveStreamScreen from './components/LiveStreamScreen';
+import BuyerProfileScreen from './components/BuyerProfileScreen';
+import NotificationScreen from './components/NotificationScreen';
+import MessagesScreen from './components/MessagesScreen';
+
+const ProductGallery: React.FC<{ images: string[] }> = ({ images }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isZoomed) return;
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.pageX - left - window.scrollX) / width) * 100;
+    const y = ((e.pageY - top - window.scrollY) / height) * 100;
+    setMousePos({ x, y });
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Main Image Stage */}
+      <div 
+        className="relative aspect-square rounded-[2rem] overflow-hidden bg-white border-4 border-gray-50 shadow-inner group cursor-zoom-in"
+        onMouseEnter={() => setIsZoomed(true)}
+        onMouseLeave={() => setIsZoomed(false)}
+        onMouseMove={handleMouseMove}
+      >
+        <img 
+          src={images[activeIndex]} 
+          alt="Product"
+          className={`w-full h-full object-cover transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+          style={isZoomed ? { transformOrigin: `${mousePos.x}% ${mousePos.y}%` } : {}}
+        />
+        
+        {!isZoomed && (
+          <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setActiveIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1)); }}
+              className="bg-white/90 p-2 rounded-full shadow-lg hover:bg-dz-orange hover:text-white transition-all"
+            >
+              <ChevronRight size={24} />
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setActiveIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0)); }}
+              className="bg-white/90 p-2 rounded-full shadow-lg hover:bg-dz-orange hover:text-white transition-all"
+            >
+              <ChevronLeft size={24} />
+            </button>
+          </div>
+        )}
+
+        <div className="absolute top-4 left-4 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-sm">
+          <ZoomIn size={18} className="text-dz-green" />
+        </div>
+      </div>
+
+      {/* Thumbnails */}
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {images.map((img, idx) => (
+          <button
+            key={idx}
+            onClick={() => setActiveIndex(idx)}
+            className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
+              activeIndex === idx ? 'border-dz-orange shadow-md scale-105' : 'border-transparent opacity-60 hover:opacity-100'
+            }`}
+          >
+            <img src={img} className="w-full h-full object-cover" alt={`Thumb ${idx}`} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'home' | 'dashboard' | 'product-detail' | 'seller-profile'>('home');
+  const [view, setView] = useState<'welcome' | 'home' | 'dashboard' | 'product-detail' | 'payment' | 'live-stream' | 'profile' | 'notifications' | 'messages'>('welcome');
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [discountedPrice, setDiscountedPrice] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAiFabVisible, setIsAiFabVisible] = useState(true);
+  
   const [currentUser, setCurrentUser] = useState<UserType | null>({
     id: 'u1',
     name: 'أمين دزيري',
@@ -26,7 +104,6 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<Product[]>([]);
 
-  // Simulation of product list with seller names and comments
   const products = MOCK_PRODUCTS.map(p => ({
     ...p,
     sellerName: p.sellerId === 's1' ? 'متجر النخلة' : 'DZ Tech',
@@ -39,7 +116,65 @@ const App: React.FC = () => {
   const handleOpenProduct = (p: Product) => {
     setActiveProduct(p);
     setView('product-detail');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleSelectRole = (role: 'buyer' | 'seller') => {
+    if (role === 'buyer') {
+      setCurrentUser(prev => prev ? { ...prev, role: 'buyer' } : null);
+      setView('home');
+    } else {
+      setCurrentUser(prev => prev ? { ...prev, role: 'seller' } : null);
+      setView('dashboard');
+    }
+  };
+
+  if (view === 'welcome') {
+    return <WelcomeScreen onSelectRole={handleSelectRole} />;
+  }
+
+  if (view === 'profile') {
+    return (
+      <BuyerProfileScreen 
+        onClose={() => setView('home')} 
+        onLogout={() => setView('welcome')} 
+      />
+    );
+  }
+
+  if (view === 'notifications') {
+    return <NotificationScreen onClose={() => setView('home')} />;
+  }
+
+  if (view === 'messages') {
+    return <MessagesScreen onClose={() => setView('home')} />;
+  }
+
+  if (view === 'live-stream' && activeProduct) {
+    return (
+      <LiveStreamScreen 
+        product={activeProduct} 
+        onClose={() => setView('home')} 
+        onBuyNow={(price) => {
+          setDiscountedPrice(price);
+          setView('payment');
+        }}
+      />
+    );
+  }
+
+  if (view === 'payment' && activeProduct) {
+    return (
+      <PaymentScreen 
+        product={discountedPrice ? { ...activeProduct, price: discountedPrice } : activeProduct} 
+        onBack={() => setView('product-detail')} 
+        onSuccess={() => {
+          setDiscountedPrice(null);
+          setView('home');
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
@@ -65,6 +200,26 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Dedicated Notifications Button */}
+            <button 
+              onClick={() => setView('notifications')}
+              className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+              title="الإشعارات"
+            >
+              <Bell size={22} />
+              <div className="absolute top-1.5 right-1.5 w-2 bg-red-500 rounded-full border-2 border-dz-green"></div>
+            </button>
+
+            {/* Dedicated Messages Button */}
+            <button 
+              onClick={() => setView('messages')}
+              className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all"
+              title="الرسائل"
+            >
+              <MessageSquare size={22} />
+              <div className="absolute top-1.5 right-1.5 w-2 bg-dz-orange rounded-full border-2 border-dz-green"></div>
+            </button>
+
             <button 
               onClick={() => {
                 if(currentUser?.role === 'buyer') {
@@ -80,7 +235,7 @@ const App: React.FC = () => {
               {currentUser?.role === 'buyer' ? <><Store size={18}/> افتح متجرك</> : <><Home size={18}/> وضع الزبون</>}
             </button>
             
-            <div className="flex items-center gap-2 cursor-pointer bg-white/10 p-1 pr-3 rounded-full hover:bg-white/20 transition-all">
+            <div className="flex items-center gap-2 cursor-pointer bg-white/10 p-1 pr-3 rounded-full hover:bg-white/20 transition-all" onClick={() => setView('profile')}>
               <span className="text-xs font-bold hidden sm:block">{currentUser?.name}</span>
               <img src={currentUser?.avatar} className="w-8 h-8 rounded-full border-2 border-dz-orange shadow-lg" alt="User" />
             </div>
@@ -90,78 +245,91 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-8">
-        
         {view === 'dashboard' ? (
           <MerchantDashboard />
         ) : view === 'product-detail' && activeProduct ? (
-          <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
-            <button onClick={() => setView('home')} className="flex items-center gap-2 text-dz-green font-bold hover:translate-x-1 transition-transform">
-              <ArrowRight size={20} /> العودة للتسوق
-            </button>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-8 rounded-[2.5rem] shadow-sm border">
-              <div className="rounded-3xl overflow-hidden aspect-square border-8 border-gray-50 shadow-inner">
-                <img src={activeProduct.image} className="w-full h-full object-cover" alt={activeProduct.name} />
-              </div>
-              
-              <div className="flex flex-col">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className="text-xs font-bold text-dz-orange bg-dz-orange/10 px-3 py-1 rounded-full mb-2 inline-block uppercase tracking-wider">
-                      {activeProduct.category}
-                    </span>
-                    <h2 className="text-3xl font-black text-gray-800">{activeProduct.name}</h2>
-                  </div>
-                  <div className="bg-yellow-100 px-3 py-1 rounded-full flex items-center gap-1 text-yellow-700 font-bold">
-                    <Star size={16} fill="currentColor" /> {activeProduct.rating}
-                  </div>
-                </div>
-
-                <p className="text-gray-500 leading-relaxed mb-6 flex-1">
-                  {activeProduct.description}
-                </p>
-
-                <div className="bg-gray-50 p-6 rounded-3xl mb-8">
-                   <p className="text-sm text-gray-500 mb-1">السعر الحالي</p>
-                   <div className="flex items-baseline gap-3">
-                     <span className="text-4xl font-black text-dz-green">{activeProduct.price.toLocaleString()} دج</span>
-                     {activeProduct.oldPrice && <span className="text-lg text-gray-400 line-through">{activeProduct.oldPrice.toLocaleString()} دج</span>}
-                   </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <button className="flex-1 bg-dz-orange text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-dz-orange/20 hover:scale-[1.02] active:scale-95 transition-all">
-                    اشتري الآن
-                  </button>
-                  <button 
-                    onClick={() => setIsChatOpen(true)}
-                    className="bg-dz-green text-white px-6 rounded-2xl shadow-xl shadow-dz-green/20 hover:scale-[1.02] active:scale-95 transition-all"
-                  >
-                    <MessageSquare />
-                  </button>
+          <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-500">
+            <div className="flex items-center justify-between">
+              <button onClick={() => setView('home')} className="flex items-center gap-2 text-dz-green font-bold hover:translate-x-1 transition-transform bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100">
+                <ArrowRight size={20} /> العودة للتسوق
+              </button>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setView('live-stream')}
+                  className="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold flex items-center gap-2 animate-pulse border border-red-100"
+                >
+                   <Video size={18} /> شاهد البث المباشر
+                </button>
+                <button className="p-2 bg-white rounded-xl shadow-sm border hover:text-dz-orange transition-all">
+                   <Share2 size={20} />
+                </button>
+                <div className="bg-dz-green/10 text-dz-green px-4 py-2 rounded-xl font-bold flex items-center gap-2">
+                   <Store size={18} /> {activeProduct.sellerName}
                 </div>
               </div>
             </div>
-
-            {/* Comments Section */}
-            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border">
-              <h3 className="text-xl font-bold mb-6">الردود والاستفسارات ({activeProduct.comments.length})</h3>
-              <div className="space-y-6 mb-8">
-                {activeProduct.comments.map(c => (
-                  <div key={c.id} className={`flex gap-4 ${c.userName === 'البائع' ? 'bg-dz-green/5 p-4 rounded-2xl border-r-4 border-dz-green' : ''}`}>
-                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${c.userName}`} className="w-10 h-10 rounded-full border shadow-sm" alt="U" />
-                    <div>
-                      <p className="font-bold text-sm text-gray-800">{c.userName} <span className="text-[10px] text-gray-400 font-normal mr-2">منذ ساعة</span></p>
-                      <p className="text-sm text-gray-600 mt-1">{c.text}</p>
-                    </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <ProductGallery images={activeProduct.images} />
+              
+              <div className="flex flex-col">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <span className="text-xs font-bold text-dz-orange bg-dz-orange/10 px-4 py-1.5 rounded-full mb-3 inline-block uppercase tracking-wider">
+                      {activeProduct.category}
+                    </span>
+                    <h2 className="text-4xl font-black text-gray-800 leading-tight">{activeProduct.name}</h2>
                   </div>
-                ))}
-              </div>
-              <div className="flex gap-3 bg-gray-50 p-2 rounded-2xl border focus-within:ring-2 focus-within:ring-dz-green transition-all">
-                <input type="text" placeholder="اكتب ردك هنا..." className="flex-1 bg-transparent border-none py-3 px-4 focus:ring-0 text-sm" />
-                <button className="bg-dz-green text-white p-3 rounded-xl">
-                  <Send size={18} className="rotate-180" />
-                </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="bg-yellow-100 px-4 py-1.5 rounded-full flex items-center gap-2 text-yellow-700 font-black shadow-sm">
+                      <Star size={18} fill="currentColor" /> {activeProduct.rating}
+                    </div>
+                    <span className="text-xs text-gray-400 font-medium">{activeProduct.reviewsCount} تقييم</span>
+                  </div>
+                </div>
+
+                <div className="space-y-6 flex-1">
+                  <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+                     <p className="text-sm font-bold text-gray-400 mb-2">السعر الإجمالي</p>
+                     <div className="flex items-baseline gap-4">
+                       <span className="text-5xl font-black text-dz-green">{activeProduct.price.toLocaleString()} دج</span>
+                       {activeProduct.oldPrice && (
+                         <span className="text-2xl text-gray-300 line-through font-bold">
+                           {activeProduct.oldPrice.toLocaleString()} دج
+                         </span>
+                       )}
+                       {activeProduct.oldPrice && (
+                         <span className="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm font-black">
+                           وفر {Math.round(((activeProduct.oldPrice - activeProduct.price) / activeProduct.oldPrice) * 100)}%
+                         </span>
+                       )}
+                     </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h4 className="font-black text-gray-800 mb-4 flex items-center gap-2 underline decoration-dz-orange decoration-4 underline-offset-4">
+                       المواصفات والوصف
+                    </h4>
+                    <p className="text-gray-500 leading-relaxed text-lg">
+                      {activeProduct.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <button 
+                    onClick={() => setView('payment')}
+                    className="flex-1 bg-dz-orange text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-dz-orange/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                  >
+                    <ShoppingBag size={24} /> اشتري الآن
+                  </button>
+                  <button 
+                    onClick={() => setIsChatOpen(true)}
+                    className="bg-dz-green text-white px-8 rounded-3xl shadow-xl shadow-dz-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center"
+                  >
+                    <MessageSquare size={24} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -175,24 +343,14 @@ const App: React.FC = () => {
                 </span>
                 <h2 className="text-5xl md:text-6xl font-black mb-6 leading-[1.1]">تسوق بأمان، وردود ذكية بـ Gemini AI</h2>
                 <p className="text-lg opacity-80 mb-8 max-w-lg leading-relaxed">اكتشف آلاف المنتجات مع مساعد مبيعات آلي يرد على استفساراتك فوراً حول السعر والجودة والتوصيل.</p>
-                <div className="flex flex-wrap gap-4">
-                  <button className="bg-white text-dz-green px-8 py-4 rounded-2xl font-black shadow-xl hover:bg-dz-orange hover:text-white transition-all">ابدأ التسوق الآن</button>
-                  <button className="bg-transparent border-2 border-white/20 px-8 py-4 rounded-2xl font-bold hover:bg-white/10 transition-all">كيف نضمن جودتنا؟</button>
-                </div>
+                <button className="bg-white text-dz-green px-8 py-4 rounded-2xl font-black shadow-xl hover:bg-dz-orange hover:text-white transition-all">ابدأ التسوق الآن</button>
               </div>
-              {/* Abstract decorative elements */}
-              <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-              <div className="absolute top-10 right-20 w-40 h-40 bg-dz-orange/20 rounded-full blur-2xl"></div>
             </div>
 
-            {/* Popular Products Grid */}
+            {/* Products Grid */}
             <section>
               <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="text-2xl font-black text-gray-800">🔥 الأكثر طلباً حالياً</h3>
-                  <p className="text-sm text-gray-500">تم اختيارها بناءً على تقييمات المشترين الحقيقية</p>
-                </div>
-                <button className="text-dz-green font-bold flex items-center gap-2 hover:underline">مشاهدة الجميع <ArrowRight size={18} /></button>
+                <h3 className="text-2xl font-black text-gray-800">🔥 الأكثر طلباً حالياً</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {products.map(product => (
@@ -209,17 +367,24 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Chat Bot */}
-      <button 
-        onClick={() => setIsChatOpen(true)}
-        className="fixed bottom-8 left-8 bg-dz-green text-white p-5 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-50 group border-4 border-white"
-      >
-        <MessageSquare size={32} strokeWidth={2.5} />
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-dz-orange rounded-full border-2 border-white"></div>
-        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-dz-green px-4 py-2 rounded-2xl text-xs font-bold shadow-xl border whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          {activeProduct ? `اسأل عن ${activeProduct.name}` : 'اسأل المساعد الذكي'}
-        </span>
-      </button>
+      {/* Floating Chat Bot with Hide Option */}
+      {isAiFabVisible && (
+        <div className="fixed bottom-8 left-8 z-50 flex flex-col items-center gap-2">
+          <button 
+            onClick={() => setIsAiFabVisible(false)}
+            className="bg-white text-red-500 p-1.5 rounded-full shadow-lg hover:bg-red-50 transition-all border border-red-100"
+            title="إخفاء المساعد"
+          >
+            <X size={14} />
+          </button>
+          <button 
+            onClick={() => setIsChatOpen(true)}
+            className="bg-dz-green text-white p-5 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all group border-4 border-white"
+          >
+            <MessageSquare size={32} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
       {isChatOpen && (
         <ChatSystem 
@@ -227,31 +392,6 @@ const App: React.FC = () => {
           activeProduct={activeProduct as any} 
         />
       )}
-
-      {/* Footer */}
-      <footer className="bg-white border-t py-12">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-right">
-          <div className="space-y-4">
-            <h4 className="text-xl font-black text-dz-green">DZ MARKET</h4>
-            <p className="text-sm text-gray-500 max-w-xs mx-auto md:ml-0">أول منصة تجزئة ذكية تجمع بين الخبرة الجزائرية والذكاء الاصطناعي العالمي.</p>
-          </div>
-          <div>
-            <h5 className="font-bold mb-4">روابط سريعة</h5>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li className="hover:text-dz-green cursor-pointer transition-colors">عن الشركة</li>
-              <li className="hover:text-dz-green cursor-pointer transition-colors">سياسة الخصوصية</li>
-              <li className="hover:text-dz-green cursor-pointer transition-colors">مساعدة</li>
-            </ul>
-          </div>
-          <div>
-            <h5 className="font-bold mb-4">تابعنا</h5>
-            <div className="flex justify-center md:justify-start gap-4">
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:bg-dz-orange hover:text-white transition-all cursor-pointer"><Share2 size={20}/></div>
-              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 hover:bg-dz-green hover:text-white transition-all cursor-pointer"><Bell size={20}/></div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
