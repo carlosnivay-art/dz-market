@@ -1,0 +1,8 @@
+{
+  "name": "Copy of DZ Market - سوق الجزائر الذكي",
+  "description": "منصة التجارة الإلكترونية الجزائرية المدعومة بالذكاء الاصطناعي للباعة والمشترين.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
