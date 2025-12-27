@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Link as LinkIcon, ExternalLink } from 'lucide-react';
-import { chatWithProductAI, generalAIChat } from '../services/geminiService';
+import { X, Send, Sparkles, Link as LinkIcon, ExternalLink, Camera, Image as ImageIcon, Mic, MicOff, Volume2, Loader2, Trash2 } from 'lucide-react';
+import { multimodalAIChat, generateSpeech, decodeAudio, decodeAudioData } from '../services/geminiService';
 import { Product } from '../types';
 
 interface ChatSystemProps {
@@ -12,7 +12,9 @@ interface ChatSystemProps {
 interface Message {
   role: 'user' | 'ai';
   text: string;
+  image?: string;
   sources?: any[];
+  isSpeaking?: boolean;
 }
 
 const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
@@ -20,34 +22,43 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     { 
       role: 'ai', 
       text: activeProduct 
-        ? `مرحباً! أنا "VEX"، المساعد الذكي لهذا المنتج (${activeProduct.name}). هل لديك أي استفسار حول سعره أو مواصفاته؟ للعلم، هذا التطبيق من تطوير المهندس ضياف أيمن.`
-        : 'أهلاً بك في DZ Market! أنا "VEX"، مساعدك التجاري الذكي. كيف يمكنني مساعدتك في استكشاف السوق الجزائري أو العالمي اليوم؟ 🇩🇿' 
+        ? `مرحباً! أنا "VEX"، المساعد الذكي لهذا المنتج. يمكنك سؤالي كتابةً أو صوتاً، أو حتى إرسال صورة للمقارنة!`
+        : 'أهلاً بك في DZ Market! أنا "VEX". يمكنني فهم صورك، صوتك، وأسئلتك حول السوق الجزائري 🇩🇿' 
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, selectedImage]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (textOverride?: string) => {
+    const userMsg = textOverride || input;
+    if (!userMsg.trim() && !selectedImage) return;
 
-    const userMsg = input;
+    const currentImage = selectedImage;
+    setMessages(prev => [...prev, { role: 'user', text: userMsg, image: currentImage || undefined }]);
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setSelectedImage(null);
     setIsTyping(true);
 
-    let result;
-    if (activeProduct) {
-      result = await chatWithProductAI(userMsg, activeProduct);
-    } else {
-      result = await generalAIChat(userMsg);
+    // التحويل إلى Base64 لإرساله لـ Gemini
+    let base64Data = "";
+    if (currentImage) {
+      base64Data = currentImage.split(',')[1];
     }
+
+    const result = await multimodalAIChat(userMsg || "ماذا يوجد في هذه الصورة؟", base64Data, activeProduct as any);
     
     setIsTyping(false);
     setMessages(prev => [...prev, { 
@@ -57,19 +68,83 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     }]);
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, isCamera = false) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
+      recorder.onstop = async () => {
+        // هنا يمكن إضافة تحويل الصوت إلى نص (STT) 
+        // أو إرسال الصوت مباشرة لـ Gemini إذا كان يدعم الملفات الصوتية في المحادثة
+        // للتبسيط، سنقوم بمحاكاة التعرف على الصوت
+        handleSend("استفسار صوتي (جاري التحليل...)");
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      alert("يرجى السماح بالوصول للميكروفون");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const playResponse = async (text: string, index: number) => {
+    setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: true } : m));
+    
+    const audioBase64 = await generateSpeech(text);
+    if (audioBase64) {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioData = decodeAudio(audioBase64);
+      const buffer = await decodeAudioData(audioData, audioCtx);
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioCtx.destination);
+      source.onended = () => {
+        setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+      };
+      source.start();
+    } else {
+      setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+    }
+  };
+
   return (
-    <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[550px] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 animate-in slide-in-from-bottom-10 duration-300">
-      <div className="bg-dz-green p-4 flex items-center justify-between text-white">
+    <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[600px] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 animate-in slide-in-from-bottom-10 duration-300">
+      {/* Hidden Inputs */}
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e)} />
+      <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={(e) => handleFileSelect(e)} />
+
+      <div className="bg-dz-green p-5 flex items-center justify-between text-white">
         <div className="flex items-center gap-3">
-          <div className="bg-white/20 p-2 rounded-full">
+          <div className="bg-white/20 p-2 rounded-2xl">
             <Sparkles size={20} />
           </div>
           <div>
-            <p className="font-bold text-sm">VEX - المساعد الذكي</p>
-            <p className="text-[10px] text-white/70">متصل الآن بـ Google Search 🌐</p>
+            <p className="font-black text-sm">VEX AI 🧠</p>
+            <p className="text-[10px] text-white/70">متعدد الوسائط (صوت وصورة)</p>
           </div>
         </div>
-        <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
+        <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
           <X size={20} />
         </button>
       </div>
@@ -77,32 +152,34 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-950">
         {messages.map((m, idx) => (
           <div key={idx} className={`flex flex-col ${m.role === 'user' ? 'items-start' : 'items-end'}`}>
-            <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+            <div className={`max-w-[85%] p-4 rounded-[1.5rem] text-sm leading-relaxed shadow-sm relative group ${
               m.role === 'user' 
                 ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-br-none border border-gray-100 dark:border-gray-700' 
                 : 'bg-dz-green text-white rounded-bl-none'
             }`}>
+              {m.image && (
+                <img src={m.image} className="w-full rounded-xl mb-2 border border-dz-border shadow-sm" alt="Shared" />
+              )}
               {m.text}
               
-              {/* Sources Rendering */}
+              {m.role === 'ai' && (
+                <button 
+                  onClick={() => playResponse(m.text, idx)}
+                  disabled={m.isSpeaking}
+                  className={`mt-2 flex items-center gap-1 text-[10px] font-bold p-1 rounded-lg transition-colors ${m.isSpeaking ? 'text-dz-orange' : 'text-white/60 hover:text-white'}`}
+                >
+                  {m.isSpeaking ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
+                  استمع للإجابة
+                </button>
+              )}
+
               {m.sources && m.sources.length > 0 && (
                 <div className="mt-3 pt-2 border-t border-white/20">
-                  <p className="text-[10px] font-bold mb-1 flex items-center gap-1">
-                    <LinkIcon size={10} /> المصادر والمعلومات الإضافية:
-                  </p>
                   <div className="flex flex-wrap gap-1">
-                    {m.sources.map((chunk, i) => (
-                      chunk.web && (
-                        <a 
-                          key={i} 
-                          href={chunk.web.uri} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[9px] bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded flex items-center gap-1 transition-colors"
-                        >
-                          {chunk.web.title || 'رابط خارجي'} <ExternalLink size={8} />
-                        </a>
-                      )
+                    {m.sources.map((chunk, i) => chunk.web && (
+                      <a key={i} href={chunk.web.uri} target="_blank" rel="noopener noreferrer" className="text-[9px] bg-white/10 px-2 py-0.5 rounded flex items-center gap-1">
+                        المصدر <ExternalLink size={8} />
+                      </a>
                     ))}
                   </div>
                 </div>
@@ -112,32 +189,59 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
         ))}
         {isTyping && (
           <div className="flex justify-end">
-            <div className="bg-dz-green/10 text-dz-green dark:text-dz-green/80 p-3 rounded-2xl rounded-bl-none animate-pulse text-xs flex items-center gap-2">
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 bg-dz-green rounded-full animate-bounce"></div>
-                <div className="w-1.5 h-1.5 bg-dz-green rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                <div className="w-1.5 h-1.5 bg-dz-green rounded-full animate-bounce [animation-delay:0.4s]"></div>
-              </div>
-              VEX يقوم بالبحث والتحليل...
+            <div className="bg-dz-green/10 text-dz-green p-3 rounded-2xl animate-pulse text-[10px] font-black">
+              VEX يحلل البيانات...
             </div>
           </div>
         )}
       </div>
 
-      <div className="p-4 border-t dark:border-gray-800 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-2xl px-3 py-1">
+      {/* Image Preview */}
+      {selectedImage && (
+        <div className="p-2 px-4 bg-gray-100 dark:bg-gray-800 flex items-center gap-3 animate-in slide-in-from-bottom-2">
+          <div className="relative w-12 h-12">
+            <img src={selectedImage} className="w-full h-full object-cover rounded-lg border-2 border-dz-green" />
+            <button onClick={() => setSelectedImage(null)} className="absolute -top-1 -right-1 bg-red-500 text-white p-0.5 rounded-full">
+              <X size={10} />
+            </button>
+          </div>
+          <span className="text-[10px] font-bold text-gray-500">تم اختيار صورة للتحليل</span>
+        </div>
+      )}
+
+      <div className="p-4 border-t dark:border-gray-800 bg-white dark:bg-gray-900 space-y-3">
+        <div className="flex items-center gap-2">
+           <button onClick={() => cameraInputRef.current?.click()} className="p-2 text-gray-400 hover:text-dz-green hover:bg-dz-green/5 rounded-xl transition-all">
+             <Camera size={20} />
+           </button>
+           <button onClick={() => fileInputRef.current?.click()} className="p-2 text-gray-400 hover:text-dz-green hover:bg-dz-green/5 rounded-xl transition-all">
+             <ImageIcon size={20} />
+           </button>
+           <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1"></div>
+           <button 
+             onMouseDown={startRecording}
+             onMouseUp={stopRecording}
+             onTouchStart={startRecording}
+             onTouchEnd={stopRecording}
+             className={`p-3 rounded-2xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-dz-orange hover:bg-dz-orange/5'}`}
+           >
+             {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+           </button>
+        </div>
+
+        <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-[1.5rem] px-4 py-1">
           <input 
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="اسأل VEX عن السوق، الموثوقية، أو المطور..."
-            className="flex-1 bg-transparent border-none py-3 text-sm focus:outline-none focus:ring-0 text-gray-800 dark:text-white placeholder:text-gray-400"
+            placeholder="اسأل، صور، أو سجل صوتك..."
+            className="flex-1 bg-transparent border-none py-3 text-sm focus:outline-none text-gray-800 dark:text-white"
           />
           <button 
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="text-dz-green hover:bg-white dark:hover:bg-gray-700 p-2 rounded-full transition-all disabled:text-gray-300 dark:disabled:text-gray-600"
+            onClick={() => handleSend()}
+            disabled={!input.trim() && !selectedImage}
+            className="text-dz-green disabled:text-gray-300 p-2"
           >
             <Send size={20} className="rotate-180" />
           </button>

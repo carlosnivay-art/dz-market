@@ -1,70 +1,99 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import { Product } from "../types";
 
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-export const chatWithProductAI = async (message: string, product: Product) => {
+// وظيفة المحادثة العامة مع دعم الصور
+export const multimodalAIChat = async (message: string, imageBase64?: string, product?: Product) => {
   try {
+    // ALWAYS initialize a fresh instance of GoogleGenAI before generating content.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const model = "gemini-3-flash-preview";
+    const parts: any[] = [{ text: message }];
+
+    if (imageBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: imageBase64,
+        },
+      });
+    }
+
+    const systemInstruction = product 
+      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن.`
+      : `أنت "VEX"، مساعد ديزاد ماركت الذكي. صممك المهندس ضياف أيمن. ساعد المستخدم في التسوق والبحث في الجزائر.`;
+
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: message,
+      model: model,
+      contents: { parts },
       config: {
         tools: [{ googleSearch: {} }],
-        systemInstruction: `أنت مساعد مبيعات ذكي يدعى "VEX" لتطبيق "Dz Market" (ديزاد ماركت) في الجزائر، التطبيق من تطوير المهندس "ضياف أيمن" (Diaf Aymen).
-        أنت ترد الآن نيابة عن البائع بخصوص منتج محدد متوفر على منصة ديزاد ماركت:
-        - اسم المنتج: ${product.name}
-        - السعر: ${product.price} دج
-        - المواصفات: ${product.description}
-        - الموقع: ${product.wilaya}
-        
-        معلومات هامة:
-        - اسمك هو "VEX".
-        - منصة ديزاد ماركت هي سوق جزائري آمن يضمن حقوق الجميع.
-        - المطور هو "ضياف أيمن"، مهندس جزائري يسعى لتطوير التكنولوجيا المحلية.
-        - يمكنك البحث في الويب إذا سألك المستخدم عن مقارنات أسعار أو تفاصيل تقنية حديثة.
-        
-        تعليماتك:
-        1. كن ودوداً واستخدم اللهجة الجزائرية الخفيفة المفهومة.
-        2. أكد على موثوقية التعامل عبر ديزاد ماركت (Dz Market).
-        3. إذا سأل عن المطور، أخبره بفخر أنه المهندس "ضياف أيمن".
-        4. دائماً عرف نفسك بـ "VEX" مساعد ديزاد ماركت الذكي.`,
+        systemInstruction: systemInstruction,
       }
     });
+
     return {
       text: response.text,
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
     };
   } catch (error) {
-    return { text: "عذراً، VEX غير متاح حالياً في ديزاد ماركت، هل يمكنك تكرار سؤالك؟" };
+    console.error("Gemini Error:", error);
+    return { text: "عذراً، واجه VEX مشكلة في تحليل طلبك. حاول مجدداً!" };
   }
 };
 
-export const generalAIChat = async (message: string) => {
+// وظيفة توليد الصوت من النص
+export const generateSpeech = async (text: string) => {
   try {
+    // ALWAYS initialize a fresh instance of GoogleGenAI before generating content.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: message,
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text: `تحدث بلهجة جزائرية خفيفة وودودة: ${text}` }] }],
       config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: `أنت "VEX"، الخبير التجاري والمساعد الذكي لتطبيق ديزاد ماركت (Dz Market)، الذي صممه وطوره المهندس الجزائري "ضياف أيمن" (Diaf Aymen).
-        
-        مهامك:
-        1. اسمك هو "VEX".
-        2. الإجابة على استفسارات التجارة في الجزائر والعالم باستخدام البحث المباشر.
-        3. شرح مدى موثوقية Dz Market (دفع آمن، توصيل سريع، حماية المشتري).
-        4. التعريف بالمطور "ضياف أيمن" عند السؤال عنه كمبتكر جزائري طموح.
-        5. مساعدة المستخدمين في العثور على أفضل الصفقات على منصة ديزاد ماركت.
-        
-        كن احترافياً، مطلعاً، وداعماً للابتكار الجزائري. اسمك VEX ومنصتك هي Dz Market.`,
-      }
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: 'Kore' }, // صوت مناسب وودود
+          },
+        },
+      },
     });
-    return {
-      text: response.text,
-      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
-    };
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    return base64Audio;
   } catch (error) {
-    return { text: "مرحباً! أنا VEX، مساعد ديزاد ماركت الذكي. كيف يمكنني مساعدتك في تجربة التسوق اليوم؟" };
+    console.error("TTS Error:", error);
+    return null;
   }
+};
+
+// الدوال المساعدة لفك تشفير الصوت
+export const decodeAudio = (base64: string) => {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+};
+
+export const decodeAudioData = async (
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number = 24000,
+  numChannels: number = 1,
+): Promise<AudioBuffer> => {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
 };

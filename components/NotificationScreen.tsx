@@ -155,7 +155,8 @@ const NotificationScreen: React.FC<NotificationScreenProps> = ({ onClose }) => {
               
               <div className="flex gap-4">
                 <div className={`w-14 h-14 rounded-2xl ${n.bgColor} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-inner`}>
-                  {React.cloneElement(n.icon as React.ReactElement, { size: 28 })}
+                  {/* Correct Method: Cast the element to React.ReactElement<any> to allow the 'size' prop in cloneElement */}
+                  {React.cloneElement(n.icon as React.ReactElement<any>, { size: 28 })}
                 </div>
                 
                 <div className="flex-1 min-w-0">
