@@ -3,204 +3,219 @@ import React, { useState } from 'react';
 import { 
   User, Package, Settings, LogOut, 
   ChevronLeft, ChevronRight, Star, ShieldCheck, CreditCard,
-  MapPin, Heart, Sparkles, Box, Clock, Copy, Wifi
+  MapPin, Heart, Sparkles, Box, Clock, Copy, Wifi, Grid, Bookmark, 
+  Image as ImageIcon, Share2, Edit3, Facebook, Instagram, Twitter, MessageCircle
 } from 'lucide-react';
+import { Language, TRANSLATIONS } from '../constants';
+import { User as UserType } from '../types';
 import SettingsScreen from './SettingsScreen';
 
 interface BuyerProfileScreenProps {
+  user: UserType;
   onClose: () => void;
   onLogout: () => void;
+  currentLang: Language;
+  onLangChange: (lang: Language) => void;
 }
 
-const BaridimobCard = () => {
-  const [copied, setCopied] = useState(false);
-  const ripNumber = "00799999000123456789";
+const MOCK_USER_POSTS = [
+  { url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80", likes: 124, comments: 12 },
+  { url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80", likes: 89, comments: 5 },
+  { url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80", likes: 256, comments: 45 },
+  { url: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&q=80", likes: 67, comments: 8 },
+  { url: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&q=80", likes: 312, comments: 22 },
+  { url: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80", likes: 145, comments: 19 },
+];
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(ripNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="relative w-full aspect-[1.6/1] bg-gradient-to-br from-[#1E6B52] via-[#2a8a6b] to-[#1E6B52] rounded-[2rem] p-6 text-white shadow-2xl overflow-hidden border border-white/20 group">
-      {/* Background Patterns */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-dz-orange/20 transition-all duration-700"></div>
-      <div className="absolute bottom-0 left-0 w-40 h-40 bg-dz-orange/10 rounded-full -ml-20 -mb-20 blur-3xl"></div>
-      
-      {/* Card Content */}
-      <div className="relative h-full flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Algerie Poste</span>
-            <span className="text-xl font-black italic tracking-tighter">BARIDIMOB</span>
-          </div>
-          <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md border border-white/10">
-            <Wifi size={20} className="rotate-90 opacity-80" />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 mb-4">
-           <div className="w-12 h-9 bg-gradient-to-br from-yellow-300 to-yellow-600 rounded-md relative overflow-hidden shadow-inner border border-yellow-200/50">
-             <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-30">
-                <div className="border border-black/10"></div><div className="border border-black/10"></div><div className="border border-black/10"></div>
-                <div className="border border-black/10"></div><div className="border border-black/10"></div><div className="border border-black/10"></div>
-                <div className="border border-black/10"></div><div className="border border-black/10"></div><div className="border border-black/10"></div>
-             </div>
-           </div>
-           <div className="flex flex-col">
-              <span className="text-[8px] font-bold opacity-60">رقم الحساب (RIP)</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-lg font-bold tracking-widest">
-                  00799 **** **** 6789
-                </span>
-                <button 
-                  onClick={handleCopy}
-                  className="p-1.5 hover:bg-white/20 rounded-lg transition-all active:scale-90"
-                  title="نسخ رقم الـ RIP"
-                >
-                  <Copy size={14} className={copied ? "text-yellow-400" : "text-white"} />
-                </button>
-              </div>
-           </div>
-        </div>
-
-        <div className="flex justify-between items-end">
-          <div>
-            <span className="text-[8px] font-bold opacity-60 block uppercase">Card Holder</span>
-            <span className="text-sm font-black tracking-wide">AMINE DZIRI</span>
-          </div>
-          <div className="flex flex-col items-end">
-            <div className="flex gap-1 mb-1">
-              <div className="w-6 h-6 rounded-full bg-dz-orange/80 backdrop-blur-sm -mr-2"></div>
-              <div className="w-6 h-6 rounded-full bg-yellow-500/80 backdrop-blur-sm"></div>
-            </div>
-            <span className="text-[8px] font-black bg-white/20 px-2 py-0.5 rounded-full border border-white/10">DZ-PAY READY</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ onClose, onLogout }) => {
-  const [lang, setLang] = useState<'ar' | 'fr' | 'en'>('ar');
+const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, onLogout, currentLang, onLangChange }) => {
   const [showSettings, setShowSettings] = useState(false);
-
-  const t = {
-    ar: { dir: 'rtl', profile: 'الملف الشخصي', points: 'نقطة مكافأة', orders: 'طلباتي', settings: 'الإعدادات', logout: 'تسجيل الخروج', activeOrders: 'الطلبات النشطة', wallet: 'محفظة بريدي موب' },
-    fr: { dir: 'ltr', profile: 'Profil', points: 'points bonus', orders: 'Mes commandes', settings: 'Paramètres', logout: 'Déconnexion', activeOrders: 'Commandes actives', wallet: 'Portefeuille Baridimob' },
-    en: { dir: 'ltr', profile: 'Profile', points: 'reward points', orders: 'My Orders', settings: 'Settings', logout: 'Logout', activeOrders: 'Active Orders', wallet: 'Baridimob Wallet' }
-  }[lang];
+  const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
+  const t = TRANSLATIONS[currentLang];
 
   if (showSettings) {
-    return <SettingsScreen onClose={() => setShowSettings(false)} onLogout={onLogout} />;
+    return (
+      <SettingsScreen 
+        onClose={() => setShowSettings(false)} 
+        onLogout={onLogout} 
+        currentLang={currentLang}
+        onLangChange={onLangChange}
+      />
+    );
   }
 
+  const roleLabel = user.role === 'seller' ? t.platinumSeller : t.platinumBuyer;
+  const userHandle = user.email ? user.email.split('@')[0] : 'dz_user';
+
   return (
-    <div className="fixed inset-0 z-[80] bg-gray-50 flex flex-col font-['Cairo'] overflow-hidden" dir={t.dir}>
-      {/* Header */}
-      <div className="bg-dz-green text-white p-6 pb-24 rounded-b-[3.5rem] shadow-xl relative">
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={onClose} className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-all">
+    <div className="fixed inset-0 z-[80] bg-white dark:bg-gray-950 flex flex-col font-['Cairo'] overflow-hidden transition-colors duration-300" dir={t.dir}>
+      {/* Top Header Navigation */}
+      <div className="bg-white dark:bg-gray-900 px-6 py-4 flex items-center justify-between border-b dark:border-gray-800 sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
              {t.dir === 'rtl' ? <ChevronRight /> : <ChevronLeft />}
           </button>
-          <h2 className="text-xl font-black">{t.profile}</h2>
-          <div className="w-10 flex justify-end">
-            <Settings 
-              size={24} 
-              className="opacity-70 hover:opacity-100 hover:rotate-90 transition-all cursor-pointer" 
-              onClick={() => setShowSettings(true)}
-            />
-          </div>
+          <span className="font-black text-gray-800 dark:text-white">{userHandle}</span>
         </div>
-
-        <div className="flex items-center gap-5">
-           <div className="relative">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" 
-                className="w-20 h-20 rounded-3xl border-4 border-white shadow-2xl" 
-                alt="Avatar" 
-              />
-              <div className="absolute -bottom-2 -right-2 bg-dz-orange p-1.5 rounded-lg border-2 border-white text-white">
-                 <ShieldCheck size={16} />
-              </div>
-           </div>
-           <div>
-              <h3 className="text-2xl font-black">أمين دزيري</h3>
-              <p className="text-white/70 text-sm font-medium">مشتري بلاتيني 💎</p>
-              <div className="mt-2 bg-white/20 px-3 py-1 rounded-full inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
-                 <Sparkles size={12} className="text-yellow-300" /> 1,250 {t.points}
-              </div>
-           </div>
+        <div className="flex items-center gap-2">
+           <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
+             <Share2 size={20} />
+           </button>
+           <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
+             <Settings size={20} />
+           </button>
         </div>
       </div>
 
-      {/* Profile Sections */}
-      <div className="flex-1 overflow-y-auto p-6 -mt-12 space-y-6">
-        
-        {/* Baridimob Digital Card */}
-        <section className="animate-in slide-in-from-bottom-10 duration-500 delay-100">
-          <div className="flex items-center justify-between mb-3 px-2">
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider">{t.wallet}</h3>
-            <span className="text-[10px] font-bold text-dz-green flex items-center gap-1 bg-dz-green/10 px-2 py-0.5 rounded-full">
-              <div className="w-1.5 h-1.5 bg-dz-green rounded-full animate-pulse"></div> نشط
-            </span>
-          </div>
-          <BaridimobCard />
-        </section>
+      <div className="flex-1 overflow-y-auto">
+        {/* Profile Info Section */}
+        <div className="p-6 pb-4">
+          <div className="flex items-center gap-6 mb-6">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-[2.5rem] p-1 bg-gradient-to-tr from-dz-orange to-yellow-400">
+                <img 
+                  src={user.avatar} 
+                  className="w-full h-full rounded-[2.3rem] border-4 border-white dark:border-gray-900 object-cover bg-white" 
+                  alt="Avatar" 
+                />
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-dz-green p-1.5 rounded-xl border-2 border-white dark:border-gray-900 text-white shadow-lg">
+                 <ShieldCheck size={16} />
+              </div>
+            </div>
 
-        {/* Quick Stats */}
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-100 grid grid-cols-2 gap-4">
-           <div className="text-center p-4 bg-gray-50 rounded-2xl group hover:bg-dz-green/5 transition-colors cursor-pointer">
-              <Box className="mx-auto mb-2 text-dz-green group-hover:scale-110 transition-transform" />
-              <p className="text-xs text-gray-400 font-bold">إجمالي الطلبات</p>
-              <p className="text-xl font-black text-gray-800">24</p>
-           </div>
-           <div className="text-center p-4 bg-gray-50 rounded-2xl group hover:bg-dz-orange/5 transition-colors cursor-pointer">
-              <Star className="mx-auto mb-2 text-dz-orange group-hover:scale-110 transition-transform" />
-              <p className="text-xs text-gray-400 font-bold">التقييمات</p>
-              <p className="text-xl font-black text-gray-800">12</p>
-           </div>
+            <div className="flex-1 flex justify-around text-center">
+              <div>
+                <p className="text-xl font-black text-gray-800 dark:text-white leading-none">42</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.posts}</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-gray-800 dark:text-white leading-none">1.2k</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.followers}</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-gray-800 dark:text-white leading-none">156</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.following}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1 mb-4">
+            <h3 className="text-xl font-black text-gray-800 dark:text-white">{user.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{roleLabel} | محب للتكنولوجيا 📱</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-xs">
+              أبحث دائماً عن أفضل الصفقات في الجزائر 🇩🇿. مهتم بالإلكترونيات والمنتجات المبتكرة.
+            </p>
+            <div className="flex items-center gap-2 pt-2">
+              <MapPin size={14} className="text-dz-green" />
+              <span className="text-xs font-bold text-dz-green">الجزائر العاصمة</span>
+            </div>
+          </div>
+
+          {/* Social Links */}
+          <div className="flex gap-3 mb-6">
+            <button className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl"><Facebook size={18}/></button>
+            <button className="p-2 bg-pink-50 dark:bg-pink-900/20 text-pink-600 rounded-xl"><Instagram size={18}/></button>
+            <button className="p-2 bg-sky-50 dark:bg-sky-900/20 text-sky-500 rounded-xl"><Twitter size={18}/></button>
+          </div>
+
+          <div className="flex gap-2">
+            <button className="flex-1 bg-dz-green text-white py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-dz-green/20 hover:scale-[1.02] active:scale-95 transition-all">
+              <Edit3 size={16} /> تعديل الملف
+            </button>
+            <button className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-black text-sm hover:bg-gray-200 transition-all">
+              إحصائيات
+            </button>
+          </div>
         </div>
 
-        {/* Orders Section */}
-        <section>
-          <h3 className="text-sm font-black text-gray-400 uppercase tracking-wider mb-4 px-2">{t.activeOrders}</h3>
-          <div className="bg-white p-8 rounded-[2.5rem] text-center border-2 border-dashed border-gray-100">
-             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                <Package size={32} />
-             </div>
-             <p className="text-gray-400 font-bold text-sm">لا توجد طلبات نشطة حالياً</p>
-             <button className="mt-4 text-dz-green font-black text-xs underline">تصفح المنتجات</button>
-          </div>
-        </section>
+        {/* Tabs Selection */}
+        <div className="flex border-b dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-[60px] z-10">
+          <button 
+            onClick={() => setActiveTab('posts')}
+            className={`flex-1 py-4 flex flex-col items-center gap-1 transition-all relative ${
+              activeTab === 'posts' ? 'text-dz-green' : 'text-gray-400'
+            }`}
+          >
+            <Grid size={20} className={activeTab === 'posts' ? 'scale-110' : ''} />
+            <span className="text-[10px] font-black uppercase tracking-wider">{t.myPosts}</span>
+            {activeTab === 'posts' && <div className="absolute bottom-0 w-1/2 h-1 bg-dz-green rounded-t-full"></div>}
+          </button>
+          
+          <button 
+            onClick={() => setActiveTab('saved')}
+            className={`flex-1 py-4 flex flex-col items-center gap-1 transition-all relative ${
+              activeTab === 'saved' ? 'text-dz-green' : 'text-gray-400'
+            }`}
+          >
+            <Bookmark size={20} className={activeTab === 'saved' ? 'scale-110' : ''} />
+            <span className="text-[10px] font-black uppercase tracking-wider">{t.savedItems}</span>
+            {activeTab === 'saved' && <div className="absolute bottom-0 w-1/2 h-1 bg-dz-green rounded-t-full"></div>}
+          </button>
+        </div>
 
-        {/* Account Quick Settings */}
-        <section className="space-y-3 pb-10">
-           <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">{t.settings}</h5>
-           
-           <button onClick={() => setShowSettings(true)} className="w-full bg-white p-5 rounded-3xl flex items-center justify-between group shadow-sm border border-gray-50 hover:border-dz-green transition-all">
-              <div className="flex items-center gap-4">
-                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all"><Settings size={20} /></div>
-                 <span className="font-bold text-sm text-gray-700">جميع الإعدادات</span>
+        {/* Content Area */}
+        {activeTab === 'posts' ? (
+          <div className="grid grid-cols-3 gap-0.5 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900">
+            {MOCK_USER_POSTS.map((post, i) => (
+              <div key={i} className="aspect-square relative group overflow-hidden cursor-pointer bg-gray-200 dark:bg-gray-800">
+                 <img 
+                   src={post.url} 
+                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                   alt={`Post ${i}`} 
+                 />
+                 {/* Interaction Overlay on Hover */}
+                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-4 text-white">
+                    <div className="flex items-center gap-1">
+                      <Heart size={18} className="fill-current" />
+                      <span className="text-xs font-black">{post.likes}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageCircle size={18} className="fill-current" />
+                      <span className="text-xs font-black">{post.comments}</span>
+                    </div>
+                 </div>
               </div>
-              <ChevronLeft size={18} className="text-gray-200 group-hover:text-dz-green transition-all" />
-           </button>
+            ))}
+            {/* Empty placeholders to fill the grid if needed */}
+            {[...Array(3)].map((_, i) => (
+               <div key={`extra-${i}`} className="aspect-square bg-gray-100 dark:bg-gray-900 flex items-center justify-center opacity-30">
+                  <ImageIcon size={24} className="text-gray-300" />
+               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center flex flex-col items-center justify-center space-y-4 animate-in slide-in-from-bottom-5">
+            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+               <Bookmark size={40} />
+            </div>
+            <div>
+              <h4 className="font-black text-gray-800 dark:text-gray-200">لا توجد محفوظات</h4>
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-bold max-w-[200px] mx-auto">احفظ المنتجات التي تعجبك لتجدها هنا لاحقاً.</p>
+            </div>
+            <button 
+              onClick={onClose}
+              className="bg-dz-orange text-white px-8 py-3 rounded-2xl text-xs font-black shadow-lg shadow-dz-orange/20"
+            >
+              استكشف السوق
+            </button>
+          </div>
+        )}
 
+        {/* Footer Actions */}
+        <div className="p-6 space-y-3 pb-24">
            <button 
              onClick={onLogout}
-             className="w-full bg-white p-5 rounded-3xl flex items-center justify-between group shadow-sm border border-gray-100 hover:bg-red-50 transition-all mt-4"
+             className="w-full bg-red-50 dark:bg-red-900/10 p-5 rounded-3xl flex items-center justify-between group border border-red-100 dark:border-red-900/20 transition-all"
            >
-              <div className="flex items-center gap-4 text-red-600 opacity-60 group-hover:opacity-100">
-                 <div className="p-2 bg-gray-100 text-gray-400 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
+              <div className="flex items-center gap-4 text-red-600">
+                 <div className="p-2 bg-white dark:bg-gray-800 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
                     <LogOut size={20} />
                  </div>
-                 <span className="font-bold text-sm group-hover:text-red-600 transition-colors">{t.logout}</span>
+                 <span className="font-black text-sm">{t.logout}</span>
               </div>
-              <ChevronLeft size={18} className="text-gray-200 group-hover:text-red-600 transition-all" />
+              <ChevronLeft size={18} className={`text-red-300 group-hover:text-red-600 ${t.dir === 'rtl' ? '' : 'rotate-180'}`} />
            </button>
-        </section>
+        </div>
       </div>
     </div>
   );

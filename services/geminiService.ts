@@ -11,26 +11,33 @@ export const chatWithProductAI = async (message: string, product: Product) => {
       model: "gemini-3-flash-preview",
       contents: message,
       config: {
-        systemInstruction: `أنت مساعد مبيعات ذكي لمتجر "DZ Market" في الجزائر. 
-        أنت ترد الآن نيابة عن البائع بخصوص منتج محدد:
+        tools: [{ googleSearch: {} }],
+        systemInstruction: `أنت مساعد مبيعات ذكي يدعى "VEX" لتطبيق "Dz Market" (ديزاد ماركت) في الجزائر، التطبيق من تطوير المهندس "ضياف أيمن" (Diaf Aymen).
+        أنت ترد الآن نيابة عن البائع بخصوص منتج محدد متوفر على منصة ديزاد ماركت:
         - اسم المنتج: ${product.name}
         - السعر: ${product.price} دج
         - المواصفات: ${product.description}
         - الموقع: ${product.wilaya}
-        - التوصيل: ${product.isFastDelivery ? 'سريع (24-48 ساعة)' : 'عادي'}
+        
+        معلومات هامة:
+        - اسمك هو "VEX".
+        - منصة ديزاد ماركت هي سوق جزائري آمن يضمن حقوق الجميع.
+        - المطور هو "ضياف أيمن"، مهندس جزائري يسعى لتطوير التكنولوجيا المحلية.
+        - يمكنك البحث في الويب إذا سألك المستخدم عن مقارنات أسعار أو تفاصيل تقنية حديثة.
         
         تعليماتك:
-        1. كن ودوداً واستخدم اللهجة الجزائرية الخفيفة المحببة.
-        2. إذا سأل الزبون عن السعر أو المواصفات، أعطه المعلومات بدقة بناءً على ما سبق.
-        3. إذا سأل عن التوصيل، أخبره بالولايات (توصيل لـ 58 ولاية).
-        4. شجع الزبون على الشراء بلطف.
-        5. لا تخترع معلومات غير موجودة عن المنتج.`,
+        1. كن ودوداً واستخدم اللهجة الجزائرية الخفيفة المفهومة.
+        2. أكد على موثوقية التعامل عبر ديزاد ماركت (Dz Market).
+        3. إذا سأل عن المطور، أخبره بفخر أنه المهندس "ضياف أيمن".
+        4. دائماً عرف نفسك بـ "VEX" مساعد ديزاد ماركت الذكي.`,
       }
     });
-    // The simplest and most direct way to get the generated text content is by accessing the .text property.
-    return response.text;
+    return {
+      text: response.text,
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
+    };
   } catch (error) {
-    return "عذراً، البائع غير متاح حالياً، هل يمكنك تكرار سؤالك؟";
+    return { text: "عذراً، VEX غير متاح حالياً في ديزاد ماركت، هل يمكنك تكرار سؤالك؟" };
   }
 };
 
@@ -40,12 +47,24 @@ export const generalAIChat = async (message: string) => {
       model: "gemini-3-flash-preview",
       contents: message,
       config: {
-        systemInstruction: "أنت مساعد سوق DZ Market. ساعد المستخدمين في العثور على المنتجات وشرح كيفية عمل المنصة للباعة والمشترين في الجزائر.",
+        tools: [{ googleSearch: {} }],
+        systemInstruction: `أنت "VEX"، الخبير التجاري والمساعد الذكي لتطبيق ديزاد ماركت (Dz Market)، الذي صممه وطوره المهندس الجزائري "ضياف أيمن" (Diaf Aymen).
+        
+        مهامك:
+        1. اسمك هو "VEX".
+        2. الإجابة على استفسارات التجارة في الجزائر والعالم باستخدام البحث المباشر.
+        3. شرح مدى موثوقية Dz Market (دفع آمن، توصيل سريع، حماية المشتري).
+        4. التعريف بالمطور "ضياف أيمن" عند السؤال عنه كمبتكر جزائري طموح.
+        5. مساعدة المستخدمين في العثور على أفضل الصفقات على منصة ديزاد ماركت.
+        
+        كن احترافياً، مطلعاً، وداعماً للابتكار الجزائري. اسمك VEX ومنصتك هي Dz Market.`,
       }
     });
-    // The simplest and most direct way to get the generated text content is by accessing the .text property.
-    return response.text;
+    return {
+      text: response.text,
+      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
+    };
   } catch (error) {
-    return "مرحباً! كيف يمكنني مساعدتك في سوق DZ Market اليوم؟";
+    return { text: "مرحباً! أنا VEX، مساعد ديزاد ماركت الذكي. كيف يمكنني مساعدتك في تجربة التسوق اليوم؟" };
   }
 };

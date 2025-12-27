@@ -4,21 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DZ Market | سوقك الذكي في الجزائر</title>
+    <title>Dz Market | ديزاد ماركت - سوقك الذكي في الجزائر</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'dz-green': '#1E6B52',
+                        'dz-orange': '#FF7A3D',
+                        'dz-bg': '#FFFFFF',
+                        'dz-text': '#374151',
+                        'dz-border': '#E5E7EB'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #FFFFFF;
+            color: #374151;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .dark body {
+            background-color: #030712;
+            color: #F9FAFB;
         }
         .bg-dz-green { background-color: #1E6B52; }
         .text-dz-green { color: #1E6B52; }
         .bg-dz-orange { background-color: #FF7A3D; }
         .text-dz-orange { color: #FF7A3D; }
-        .border-dz-green { border-color: #1E6B52; }
+        .border-dz-border { border-color: #E5E7EB; }
         
         .glass-effect {
             background: rgba(255, 255, 255, 0.8);
@@ -29,7 +51,12 @@
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
+        .dark ::-webkit-scrollbar-track { background: #111827; }
         ::-webkit-scrollbar-thumb { background: #1E6B52; border-radius: 10px; }
+
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
     </style>
 <script type="importmap">
 {

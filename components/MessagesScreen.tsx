@@ -9,7 +9,7 @@ interface MessagesScreenProps {
 const INITIAL_MESSAGES = [
   { id: 1, sender: 'متجر النخلة', lastMsg: 'هل تريد اللون الأسود أم الأبيض؟', time: '10:30 ص', unread: 2, avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Nakhla', type: 'merchant' },
   { id: 2, sender: 'DZ Tech', lastMsg: 'نعم، التوصيل متوفر لولاية تلمسان.', time: 'أمس', unread: 0, avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Tech', type: 'merchant' },
-  { id: 3, sender: 'المساعد الذكي', lastMsg: 'كيف يمكنني مساعدتك في العثور على منتج اليوم؟', time: 'أمس', unread: 0, avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Gemini', type: 'ai' },
+  { id: 3, sender: 'VEX - المساعد الذكي', lastMsg: 'كيف يمكنني مساعدتك في العثور على منتج اليوم؟', time: 'أمس', unread: 0, avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Vex', type: 'ai' },
 ];
 
 const MessagesScreen: React.FC<MessagesScreenProps> = ({ onClose }) => {
