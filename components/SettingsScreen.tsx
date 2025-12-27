@@ -1,12 +1,12 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, User, ShieldCheck, Wallet, Bell, Palette, LogOut, 
   ChevronLeft, ArrowRight, CheckCircle2, Loader2,
   Video, Heart, MessageCircle, Share2, Facebook, Instagram, Smartphone,
   Radio, Tag, Zap, Package, Headphones, HelpCircle, FileText, Lock, Star, Info, Mail, Phone, ChevronDown,
   Sparkles, Bot, Brain, Trash2, MessageSquareText, KeyRound, Fingerprint, MonitorSmartphone,
-  CreditCard, History, ArrowUpRight, ArrowDownLeft, Plus, Volume2, Globe, BellRing, Ghost
+  CreditCard, History, ArrowUpRight, ArrowDownLeft, Plus, Volume2, Globe, BellRing, Ghost, Camera, RefreshCw
 } from 'lucide-react';
 import { Language, TRANSLATIONS, WILAYAS } from '../constants';
 
@@ -15,19 +15,22 @@ interface SettingsScreenProps {
   onLogout: () => void;
   currentLang: Language;
   onLangChange: (lang: Language) => void;
+  initialSection?: string | null;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, currentLang, onLangChange }) => {
-  const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, currentLang, onLangChange, initialSection = null }) => {
+  const [activeSubSection, setActiveSubSection] = useState<string | null>(initialSection);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // User Info States
   const [userInfo, setUserInfo] = useState({
     name: 'أمين دزيري',
     phone: '0550112233',
     email: 'amin@dz-market.com',
-    wilaya: 'Alger'
+    wilaya: 'Alger',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
   });
 
   // Notification States
@@ -72,6 +75,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
       localStorage.setItem('dz-theme', 'light');
     }
   }, [theme]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setUserInfo({ ...userInfo, avatar: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const sections = [
     { 
@@ -158,6 +172,33 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
           <ArrowRight size={20} className={t.dir === 'rtl' ? '' : 'rotate-180'} />
         </button>
         <h3 className="text-xl font-black text-dz-text dark:text-white">تعديل بيانات الحساب</h3>
+      </div>
+
+      {/* Avatar Upload Section */}
+      <div className="flex flex-col items-center justify-center py-4 space-y-3">
+        <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+          <div className="w-28 h-28 rounded-[2.5rem] p-1 bg-gradient-to-tr from-dz-orange to-yellow-400 shadow-xl">
+            <img 
+              src={userInfo.avatar} 
+              className="w-full h-full rounded-[2.3rem] border-4 border-white dark:border-gray-900 object-cover bg-white" 
+              alt="Avatar" 
+            />
+          </div>
+          <div className="absolute inset-0 bg-black/40 rounded-[2.3rem] opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white">
+            <Camera size={24} />
+          </div>
+          <div className="absolute -bottom-1 -right-1 bg-dz-green p-2 rounded-xl border-2 border-white dark:border-gray-900 text-white shadow-lg">
+             <Plus size={16} />
+          </div>
+        </div>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleAvatarChange} 
+        />
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">تغيير صورة الملف الشخصي</p>
       </div>
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-dz-border dark:border-gray-700 card-shadow space-y-5">

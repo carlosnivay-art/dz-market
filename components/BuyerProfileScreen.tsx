@@ -29,8 +29,14 @@ const MOCK_USER_POSTS = [
 
 const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, onLogout, currentLang, onLangChange }) => {
   const [showSettings, setShowSettings] = useState(false);
+  const [activeSettingsSection, setActiveSettingsSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
   const t = TRANSLATIONS[currentLang];
+
+  const handleOpenSettings = (section: string | null = null) => {
+    setActiveSettingsSection(section);
+    setShowSettings(true);
+  };
 
   if (showSettings) {
     return (
@@ -39,6 +45,7 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
         onLogout={onLogout} 
         currentLang={currentLang}
         onLangChange={onLangChange}
+        initialSection={activeSettingsSection}
       />
     );
   }
@@ -60,7 +67,7 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
            <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
              <Share2 size={20} />
            </button>
-           <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
+           <button onClick={() => handleOpenSettings(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-all dark:text-white">
              <Settings size={20} />
            </button>
         </div>
@@ -119,7 +126,10 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
           </div>
 
           <div className="flex gap-2">
-            <button className="flex-1 bg-dz-green text-white py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-dz-green/20 hover:scale-[1.02] active:scale-95 transition-all">
+            <button 
+              onClick={() => handleOpenSettings('account')}
+              className="flex-1 bg-dz-green text-white py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-dz-green/20 hover:scale-[1.02] active:scale-95 transition-all"
+            >
               <Edit3 size={16} /> تعديل الملف
             </button>
             <button className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-black text-sm hover:bg-gray-200 transition-all">
