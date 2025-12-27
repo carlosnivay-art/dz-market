@@ -155,7 +155,7 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
 
         {/* Content Area */}
         {activeTab === 'posts' ? (
-          <div className="grid grid-cols-3 gap-0.5 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900">
+          <div className="grid grid-cols-3 gap-0.5 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900 pb-20">
             {MOCK_USER_POSTS.map((post, i) => (
               <div key={i} className="aspect-square relative group overflow-hidden cursor-pointer bg-gray-200 dark:bg-gray-800">
                  <img 
@@ -200,22 +200,6 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
             </button>
           </div>
         )}
-
-        {/* Footer Actions */}
-        <div className="p-6 space-y-3 pb-24">
-           <button 
-             onClick={onLogout}
-             className="w-full bg-red-50 dark:bg-red-900/10 p-5 rounded-3xl flex items-center justify-between group border border-red-100 dark:border-red-900/20 transition-all"
-           >
-              <div className="flex items-center gap-4 text-red-600">
-                 <div className="p-2 bg-white dark:bg-gray-800 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
-                    <LogOut size={20} />
-                 </div>
-                 <span className="font-black text-sm">{t.logout}</span>
-              </div>
-              <ChevronLeft size={18} className={`text-red-300 group-hover:text-red-600 ${t.dir === 'rtl' ? '' : 'rotate-180'}`} />
-           </button>
-        </div>
       </div>
     </div>
   );

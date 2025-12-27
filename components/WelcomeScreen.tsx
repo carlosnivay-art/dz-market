@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { ShoppingBag, Store, ShieldCheck, Truck, CreditCard, Sparkles, User, ArrowRight, Eye, EyeOff, KeyRound, UserPlus } from 'lucide-react';
+import { ShoppingBag, Store, ShieldCheck, Truck, CreditCard, Sparkles, User, ArrowRight, Eye, EyeOff, KeyRound, UserPlus, LogIn, Mail, Smartphone } from 'lucide-react';
 
 interface WelcomeScreenProps {
-  onSelectRole: (role: 'buyer' | 'seller') => void;
+  onSelectRole: (role: 'buyer' | 'seller', isNewUser: boolean) => void;
 }
 
 type AuthView = 'selection' | 'login' | 'signup';
@@ -53,41 +53,78 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSelectRole }) => {
     </div>
   );
 
-  const renderLogin = () => (
-    <div className="animate-in slide-in-from-left duration-500">
-      <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => setView('selection')} className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
-          <ArrowRight size={20} className="text-gray-600" />
-        </button>
-        <h2 className="text-2xl font-black text-dz-text">تسجيل الدخول</h2>
-      </div>
-      <form onSubmit={(e) => { e.preventDefault(); if (selectedRole) onSelectRole(selectedRole); }} className="space-y-5">
-        <div className="space-y-2">
-          <div className="relative">
-            <input type="text" required placeholder="رقم الهاتف أو البريد الإلكتروني" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-4 px-12 text-sm font-bold transition-all outline-none" />
-            <User size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
-          </div>
+  const renderAuthForm = () => {
+    const isSignup = view === 'signup';
+    
+    return (
+      <div className="animate-in slide-in-from-left duration-500">
+        <div className="flex items-center gap-4 mb-6">
+          <button onClick={() => setView('selection')} className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all">
+            <ArrowRight size={20} className="text-gray-600" />
+          </button>
+          <h2 className="text-xl font-black text-dz-text">{isSignup ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h2>
         </div>
-        <div className="space-y-2">
+        
+        <form 
+          onSubmit={(e) => { 
+            e.preventDefault(); 
+            if (selectedRole) onSelectRole(selectedRole, isSignup); 
+          }} 
+          className="space-y-4"
+        >
+          {isSignup && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="relative">
+                <input type="text" required placeholder="الاسم" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-3.5 px-10 text-xs font-bold transition-all outline-none" />
+                <User size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+              </div>
+              <div className="relative">
+                <input type="text" required placeholder="اللقب" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-3.5 px-10 text-xs font-bold transition-all outline-none" />
+                <User size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+              </div>
+            </div>
+          )}
+
           <div className="relative">
-            <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-4 px-12 text-sm font-bold transition-all outline-none" />
-            <KeyRound size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300" />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dz-green transition-colors">
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            <input type="text" required placeholder="رقم الهاتف أو البريد الإلكتروني" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-3.5 px-10 text-xs font-bold transition-all outline-none" />
+            <Smartphone size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+          </div>
+
+          <div className="relative">
+            <input type={showPassword ? "text" : "password"} required placeholder="كلمة المرور" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-3.5 px-10 text-xs font-bold transition-all outline-none" />
+            <KeyRound size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-dz-green transition-colors">
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-        </div>
-        <button type="submit" className="w-full bg-dz-green text-white py-4 rounded-2xl font-black shadow-xl shadow-dz-green/20 hover:opacity-95 transition-all">
-          دخول
-        </button>
-        <div className="text-center pt-4">
-          <button type="button" onClick={() => setView('signup')} className="text-dz-green font-black text-sm hover:underline flex items-center justify-center gap-2 mx-auto">
-            <UserPlus size={16} /> إنشاء حساب جديد
+
+          {isSignup && (
+            <div className="relative">
+              <input type={showPassword ? "text" : "password"} required placeholder="تأكيد كلمة المرور" className="w-full bg-gray-50 border-2 border-transparent focus:border-dz-green focus:bg-white rounded-2xl py-3.5 px-10 text-xs font-bold transition-all outline-none" />
+              <ShieldCheck size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+            </div>
+          )}
+
+          <button type="submit" className={`w-full text-white py-4 rounded-2xl font-black shadow-xl transition-all flex items-center justify-center gap-2 mt-2 ${isSignup ? 'bg-dz-orange shadow-dz-orange/20' : 'bg-dz-green shadow-dz-green/20'}`}>
+            {isSignup ? <UserPlus size={20} /> : <LogIn size={20} />}
+            {isSignup ? 'إنشاء حساب' : 'دخول'}
           </button>
-        </div>
-      </form>
-    </div>
-  );
+          
+          <div className="text-center pt-2">
+            {isSignup ? (
+              <button type="button" onClick={() => setView('login')} className="text-dz-green font-black text-xs hover:underline flex items-center justify-center gap-2 mx-auto">
+                لديك حساب بالفعل؟ سجل دخولك
+              </button>
+            ) : (
+              <button type="button" onClick={() => setView('signup')} className="text-dz-orange font-black text-xs hover:underline flex items-center justify-center gap-2 mx-auto">
+                <UserPlus size={16} /> لا تملك حساباً؟ سجل الآن
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-between p-6 overflow-hidden font-['Cairo']" dir="rtl">
@@ -102,8 +139,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSelectRole }) => {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-8 my-8 border border-dz-border flex flex-col justify-center min-h-[450px]">
-        {view === 'selection' ? renderSelection() : renderLogin()}
+      <div className="relative z-10 w-full max-w-md bg-white rounded-[3rem] shadow-2xl p-8 my-8 border border-dz-border flex flex-col justify-center min-h-[480px]">
+        {view === 'selection' ? renderSelection() : renderAuthForm()}
       </div>
 
       <div className="relative z-10 w-full py-6 flex flex-col items-center gap-4 text-center">

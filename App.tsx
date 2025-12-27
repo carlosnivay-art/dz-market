@@ -132,11 +132,15 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSelectRole = (role: 'buyer' | 'seller') => {
+  const handleSelectRole = (role: 'buyer' | 'seller', isNewUser: boolean = false) => {
     if (role === 'buyer') {
       setCurrentUser(prev => prev ? { ...prev, role: 'buyer' } : null);
+      
+      // التعديل: تظهر شاشة الاهتمامات فقط إذا كان المستخدم أنشأ حساباً للتو (isNewUser)
+      // ولم يقم باختيار اهتماماته مسبقاً
       const hasInterests = localStorage.getItem('dz-has-interests');
-      if (!hasInterests) {
+      
+      if (isNewUser && !hasInterests) {
         setView('interests-selection');
       } else {
         setView('home');
@@ -180,7 +184,7 @@ const App: React.FC = () => {
         user={currentUser!}
         onClose={() => setView('home')} 
         onLogout={() => {
-          localStorage.removeItem('dz-has-interests');
+          // ملاحظة: لا نحذف dz-has-interests عند تسجيل الخروج لكي لا تظهر الشاشة مرة أخرى لمستخدم قديم
           setView('welcome');
         }} 
         currentLang={language}
@@ -226,45 +230,54 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-dz-bg dark:bg-gray-950 flex flex-col transition-colors duration-300" dir={t.dir}>
       {/* AppBar: Green Background */}
-      <nav className="bg-dz-green text-white sticky top-0 z-50 py-4 shadow-xl">
+      <nav className="bg-dz-green text-white sticky top-0 z-50 py-3 shadow-xl">
         <div className="container mx-auto px-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
-            <div className="bg-dz-orange p-1.5 rounded-lg rotate-12">
-              <ShoppingBag size={24} strokeWidth={2.5} />
+            <div className="bg-dz-orange p-1 rounded-lg rotate-12">
+              <ShoppingBag size={20} strokeWidth={2.5} />
             </div>
-            <h1 className="text-2xl font-black tracking-tighter uppercase">{t.brand}</h1>
+            <h1 className="text-xl font-black tracking-tighter uppercase">{t.brand}</h1>
           </div>
 
-          <div className="flex-1 max-w-xl relative hidden md:block">
+          <div className="flex-1 max-w-md relative hidden md:block">
             <input 
               type="text" 
               placeholder={t.searchPlaceholder}
-              className="w-full bg-white/10 border-none rounded-2xl py-3 px-12 text-sm placeholder:text-white/50 focus:bg-white focus:text-gray-800 transition-all outline-none"
+              className="w-full bg-white/10 border-none rounded-xl py-2 px-10 text-xs placeholder:text-white/50 focus:bg-white focus:text-gray-800 transition-all outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Search className={`absolute ${t.dir === 'rtl' ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-white/50`} size={18} />
+            <Search className={`absolute ${t.dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 text-white/50`} size={16} />
           </div>
 
-          <div className="flex items-center gap-4">
-            <button onClick={() => setView('notifications')} className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
-              <Bell size={22} />
-              <div className="absolute top-1.5 right-1.5 w-2 bg-red-500 rounded-full border-2 border-dz-green"></div>
+          <div className="flex items-center gap-2">
+            {/* Search Button (Mobile/Tablet Quick Search) */}
+            <button className="md:hidden p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+              <Search size={20} />
             </button>
+
+            {/* Restored Messages Button */}
             <button onClick={() => setView('messages')} className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
-              <MessageSquare size={22} />
-              <div className="absolute top-1.5 right-1.5 w-2 bg-dz-orange rounded-full border-2 border-dz-green"></div>
+              <MessageSquare size={20} />
+              <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-dz-orange rounded-full border border-dz-green"></div>
             </button>
-            <div className="flex items-center gap-2 cursor-pointer bg-white/10 p-1 pr-3 rounded-full hover:bg-white/20 transition-all" onClick={() => setView('profile')}>
-              <span className="text-xs font-bold hidden sm:block">{currentUser?.name}</span>
-              <img src={currentUser?.avatar} className="w-8 h-8 rounded-full border-2 border-dz-orange shadow-lg" alt="User" />
+
+            {/* Notifications Button */}
+            <button onClick={() => setView('notifications')} className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+              <Bell size={20} />
+              <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-dz-green"></div>
+            </button>
+
+            {/* Profile Avatar */}
+            <div className="flex items-center gap-2 cursor-pointer bg-white/10 p-0.5 pr-1.5 rounded-full hover:bg-white/20 transition-all" onClick={() => setView('profile')}>
+              <img src={currentUser?.avatar} className="w-7 h-7 rounded-full border-2 border-dz-orange shadow-lg" alt="User" />
             </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-2 py-4">
         {view === 'dashboard' ? (
           <MerchantDashboard />
         ) : view === 'product-detail' && activeProduct ? (
@@ -344,23 +357,27 @@ const App: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-12">
-            {/* Hero Section */}
-            <div className="relative rounded-[3rem] overflow-hidden bg-dz-green p-12 text-white shadow-2xl min-h-[400px] flex flex-col justify-center">
-              <div className="relative z-10 max-w-2xl text-right">
-                <span className="bg-dz-orange text-white text-xs font-bold px-4 py-1.5 rounded-full mb-6 inline-block animate-bounce shadow-lg">
+          <div className="space-y-6">
+            {/* Hero Section - Compact for Mobile */}
+            <div className="relative rounded-[2rem] overflow-hidden bg-dz-green p-6 text-white shadow-xl min-h-[180px] flex flex-col justify-center">
+              <div className="relative z-10 max-w-md text-right">
+                <span className="bg-dz-orange text-white text-[10px] font-black px-3 py-1 rounded-full mb-3 inline-block shadow-lg">
                   {t.heroBadge}
                 </span>
-                <h2 className="text-5xl md:text-6xl font-black mb-6 leading-[1.1]">{t.heroTitle}</h2>
-                <button onClick={scrollToProducts} className="bg-white text-dz-green px-8 py-4 rounded-2xl font-black shadow-xl hover:bg-dz-orange hover:text-white transition-all active:scale-95">
+                <h2 className="text-2xl md:text-4xl font-black mb-4 leading-tight">{t.heroTitle}</h2>
+                <button onClick={scrollToProducts} className="bg-white text-dz-green px-6 py-2 rounded-xl text-xs font-black shadow-lg hover:bg-dz-orange hover:text-white transition-all">
                   {t.startShopping}
                 </button>
               </div>
             </div>
 
             <section ref={productsSectionRef} className="scroll-mt-24">
-              <h3 className="text-2xl font-black text-dz-text dark:text-white mb-8">{t.trending}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex items-center justify-between mb-4 px-2">
+                <h3 className="text-lg font-black text-dz-text dark:text-white">{t.trending}</h3>
+                <span className="text-[10px] font-bold text-dz-green">عرض الكل</span>
+              </div>
+              {/* Temu Style Grid: 2 columns on mobile, up to 6 on large screens */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                 {products.map(product => (
                   <ProductCard 
                     key={product.id} 
@@ -376,14 +393,14 @@ const App: React.FC = () => {
       </main>
 
       {/* Floating VEX button */}
-      <div className="fixed bottom-8 right-8 z-50">
+      <div className="fixed bottom-6 right-6 z-50">
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className={`p-5 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-4 border-white dark:border-gray-900 ${
+          className={`p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-white dark:border-gray-900 ${
             isChatOpen ? 'bg-dz-orange rotate-90' : 'bg-dz-green'
           } text-white`}
         >
-          {isChatOpen ? <X size={32} strokeWidth={2.5} /> : <MessageSquare size={32} strokeWidth={2.5} />}
+          {isChatOpen ? <X size={24} strokeWidth={2.5} /> : <MessageSquare size={24} strokeWidth={2.5} />}
         </button>
       </div>
 
