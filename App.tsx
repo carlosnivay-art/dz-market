@@ -16,6 +16,7 @@ import BuyerProfileScreen from './components/BuyerProfileScreen';
 import NotificationScreen from './components/NotificationScreen';
 import MessagesScreen from './components/MessagesScreen';
 import InterestsSelectionScreen from './components/InterestsSelectionScreen';
+import CreatePostScreen from './components/CreatePostScreen';
 
 const ProductGallery: React.FC<{ images: string[] }> = ({ images }) => {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -81,7 +82,7 @@ const ProductGallery: React.FC<{ images: string[] }> = ({ images }) => {
 };
 
 const App: React.FC = () => {
-  const [view, setView] = useState<'welcome' | 'interests-selection' | 'home' | 'dashboard' | 'product-detail' | 'payment' | 'live-stream' | 'profile' | 'notifications' | 'messages'>('welcome');
+  const [view, setView] = useState<'welcome' | 'interests-selection' | 'home' | 'dashboard' | 'product-detail' | 'payment' | 'live-stream' | 'profile' | 'notifications' | 'messages' | 'create-post'>('welcome');
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [discountedPrice, setDiscountedPrice] = useState<number | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -174,6 +175,19 @@ const App: React.FC = () => {
 
   if (view === 'interests-selection') {
     return <InterestsSelectionScreen onComplete={handleInterestsComplete} currentLang={language} />;
+  }
+
+  if (view === 'create-post') {
+    return (
+      <CreatePostScreen 
+        currentLang={language} 
+        onClose={() => setView('home')} 
+        onPublish={(post) => {
+          console.log("Post published:", post);
+          setView('profile');
+        }}
+      />
+    );
   }
 
   if (view === 'profile') {
@@ -383,8 +397,18 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Floating VEX button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
+        {/* New Add Post Button */}
+        {view === 'home' && (
+          <button 
+            onClick={() => setView('create-post')}
+            className="p-4 rounded-full bg-dz-orange text-white shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-white dark:border-gray-900 animate-in slide-in-from-bottom-5"
+          >
+            <Plus size={24} strokeWidth={2.5} />
+          </button>
+        )}
+
         <button 
           onClick={() => setIsChatOpen(!isChatOpen)}
           className={`p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95 border-2 border-white dark:border-gray-900 ${

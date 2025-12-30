@@ -49,7 +49,7 @@ export const TRANSLATIONS = {
     heroBadge: 'سوق الجزائر المطور 🇩🇿',
     startShopping: 'ابدأ جولتك الآن',
     trending: '🔥 ترند الجزائر حالياً',
-    backToShopping: 'الرجوع للمتجر',
+    backToShopping: 'الرئيسية',
     liveStream: 'بث مباشر للمنتجات',
     buyNow: 'اشتري الآن',
     totalPrice: 'المبلغ الإجمالي',
@@ -69,7 +69,11 @@ export const TRANSLATIONS = {
     platinumSeller: 'بائع موثوق 💎',
     interestsTitle: 'وش هي اهتماماتك؟',
     interestsSubtitle: 'ساعدنا نخصص لك أفضل العروض في DZ MARKET.',
-    continue: 'موافق'
+    continue: 'موافق',
+    createPost: 'إنشاء منشور',
+    postPlaceholder: 'واش راه في بالك اليوم؟ شارك تجربتك أو اعرض سلعتك...',
+    publishPost: 'نشر المنشور',
+    aiSuggest: 'اقتراح ذكي'
   },
   fr: {
     dir: 'ltr',
@@ -102,7 +106,11 @@ export const TRANSLATIONS = {
     platinumSeller: 'Vendeur Certifié 💎',
     interestsTitle: 'Vos Intérêts ?',
     interestsSubtitle: 'Personnalisez votre expérience DZ MARKET.',
-    continue: 'Continuer'
+    continue: 'Continuer',
+    createPost: 'Créer un post',
+    postPlaceholder: 'Quoi de neuf ? Partagez votre expérience...',
+    publishPost: 'Publier',
+    aiSuggest: 'Suggérer IA'
   },
   en: {
     dir: 'ltr',
@@ -135,7 +143,11 @@ export const TRANSLATIONS = {
     platinumSeller: 'Trusted Seller 💎',
     interestsTitle: 'Your Interests?',
     interestsSubtitle: 'Personalize your DZ MARKET experience.',
-    continue: 'Continue'
+    continue: 'Continue',
+    createPost: 'Create Post',
+    postPlaceholder: 'What\'s on your mind? Share your experience...',
+    publishPost: 'Publish',
+    aiSuggest: 'AI Suggest'
   }
 };
 
