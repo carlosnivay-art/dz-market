@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Link as LinkIcon, ExternalLink, Camera, Image as ImageIcon, Mic, MicOff, Volume2, Loader2, Trash2 } from 'lucide-react';
+import { X, Send, Sparkles, Link as LinkIcon, ExternalLink, Camera, Image as ImageIcon, Mic, MicOff, Volume2, Loader2, Trash2, Megaphone } from 'lucide-react';
 import { multimodalAIChat, generateSpeech, decodeAudio, decodeAudioData } from '../services/geminiService';
 import { Product } from '../types';
 
@@ -35,6 +35,9 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  
+  // Audio context persistent for performance
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -52,7 +55,6 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     setSelectedImage(null);
     setIsTyping(true);
 
-    // التحويل إلى Base64 لإرساله لـ Gemini
     let base64Data = "";
     if (currentImage) {
       base64Data = currentImage.split(',')[1];
@@ -68,7 +70,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     }]);
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, isCamera = false) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
@@ -88,9 +90,6 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
 
       recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
       recorder.onstop = async () => {
-        // هنا يمكن إضافة تحويل الصوت إلى نص (STT) 
-        // أو إرسال الصوت مباشرة لـ Gemini إذا كان يدعم الملفات الصوتية في المحادثة
-        // للتبسيط، سنقوم بمحاكاة التعرف على الصوت
         handleSend("استفسار صوتي (جاري التحليل...)");
       };
 
@@ -109,20 +108,35 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
   };
 
   const playResponse = async (text: string, index: number) => {
+    // Prevent multiple clicks
+    if (messages[index].isSpeaking) return;
+
     setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: true } : m));
     
     const audioBase64 = await generateSpeech(text);
     if (audioBase64) {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const audioData = decodeAudio(audioBase64);
-      const buffer = await decodeAudioData(audioData, audioCtx);
-      const source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioCtx.destination);
-      source.onended = () => {
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        const ctx = audioCtxRef.current;
+        const audioData = decodeAudio(audioBase64);
+        const buffer = await decodeAudioData(audioData, ctx);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        
+        // SPEED UP playback for better responsiveness (1.15x is a sweet spot)
+        source.playbackRate.value = 1.15;
+        
+        source.connect(ctx.destination);
+        source.onended = () => {
+          setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+        };
+        source.start(0);
+      } catch (e) {
+        console.error("Playback error", e);
         setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
-      };
-      source.start();
+      }
     } else {
       setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
     }
@@ -131,8 +145,8 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
   return (
     <div className="fixed bottom-24 right-6 w-80 sm:w-96 h-[600px] bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-200 dark:border-gray-800 animate-in slide-in-from-bottom-10 duration-300">
       {/* Hidden Inputs */}
-      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileSelect(e)} />
-      <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={(e) => handleFileSelect(e)} />
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
+      <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileSelect} />
 
       <div className="bg-dz-green p-5 flex items-center justify-between text-white">
         <div className="flex items-center gap-3">
@@ -141,7 +155,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
           </div>
           <div>
             <p className="font-black text-sm">VEX AI 🧠</p>
-            <p className="text-[10px] text-white/70">متعدد الوسائط (صوت وصورة)</p>
+            <p className="text-[10px] text-white/70">مساعد ذكي فوري</p>
           </div>
         </div>
         <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
@@ -166,10 +180,14 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
                 <button 
                   onClick={() => playResponse(m.text, idx)}
                   disabled={m.isSpeaking}
-                  className={`mt-2 flex items-center gap-1 text-[10px] font-bold p-1 rounded-lg transition-colors ${m.isSpeaking ? 'text-dz-orange' : 'text-white/60 hover:text-white'}`}
+                  className={`mt-2 flex items-center gap-2 text-[11px] font-black p-2 px-3 rounded-xl transition-all shadow-inner ${
+                    m.isSpeaking 
+                      ? 'bg-white/30 text-white animate-pulse' 
+                      : 'bg-white/10 text-white/80 hover:bg-white/20 hover:text-white'
+                  }`}
                 >
-                  {m.isSpeaking ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
-                  استمع للإجابة
+                  {m.isSpeaking ? <Loader2 size={14} className="animate-spin" /> : <Megaphone size={14} />}
+                  <span>{m.isSpeaking ? 'جاري التحدث...' : 'استماع'}</span>
                 </button>
               )}
 
@@ -190,7 +208,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
         {isTyping && (
           <div className="flex justify-end">
             <div className="bg-dz-green/10 text-dz-green p-3 rounded-2xl animate-pulse text-[10px] font-black">
-              VEX يحلل البيانات...
+              VEX يحلل طلبك...
             </div>
           </div>
         )}
@@ -205,7 +223,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
               <X size={10} />
             </button>
           </div>
-          <span className="text-[10px] font-bold text-gray-500">تم اختيار صورة للتحليل</span>
+          <span className="text-[10px] font-bold text-gray-500">صورة جاهزة للتحليل</span>
         </div>
       )}
 
