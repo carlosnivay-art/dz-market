@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Store, ShieldCheck, Truck, CreditCard, Sparkles, User, ArrowRight, Eye, EyeOff, KeyRound, UserPlus, LogIn, Smartphone, Palette, Loader2 } from 'lucide-react';
+import { ShoppingBasket, Store, ShieldCheck, Truck, CreditCard, Sparkles, User, ArrowRight, Eye, EyeOff, KeyRound, UserPlus, LogIn, Smartphone, Palette, Loader2 } from 'lucide-react';
 import { generateLogo } from '../services/geminiService';
 
 interface WelcomeScreenProps {
@@ -42,7 +42,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSelectRole }) => {
         className="w-full bg-dz-green group hover:opacity-95 p-6 rounded-[2.5rem] flex items-center gap-5 text-right transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-dz-green/20"
       >
         <div className="bg-white/10 p-4 rounded-2xl text-white group-hover:scale-110 transition-transform">
-          <ShoppingBag size={28} />
+          <ShoppingBasket size={28} />
         </div>
         <div className="flex-1 text-white text-right">
           <h3 className="font-black text-lg leading-none mb-2">دخول المشتري</h3>
@@ -144,7 +144,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSelectRole }) => {
             <img src={appLogo} alt="DZ MARKET Logo" className="w-24 h-24 rounded-2xl object-cover" />
           ) : (
             <div className="bg-dz-orange p-4 rounded-[2rem] shadow-2xl rotate-3">
-              <ShoppingBag size={48} className="text-white" strokeWidth={2.5} />
+              <ShoppingBasket size={48} className="text-white" strokeWidth={2.5} />
             </div>
           )}
         </div>

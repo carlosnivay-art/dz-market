@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Check, Sparkles, ShoppingBag } from 'lucide-react';
+import { Check, Sparkles, ShoppingBasket } from 'lucide-react';
 import { INTEREST_CATEGORIES, Language, TRANSLATIONS } from '../constants';
 
 interface InterestsSelectionScreenProps {
@@ -21,7 +21,7 @@ const InterestsSelectionScreen: React.FC<InterestsSelectionScreenProps> = ({ onC
       <div className="bg-dz-green p-8 pb-16 text-center text-white relative">
         <div className="relative z-10 flex flex-col items-center">
           <div className="bg-dz-orange p-3 rounded-2xl shadow-xl mb-4 rotate-12">
-            <ShoppingBag size={32} />
+            <ShoppingBasket size={32} />
           </div>
           <h2 className="text-3xl font-black mb-2">{t.interestsTitle}</h2>
           <p className="text-white/70 text-sm max-w-xs mx-auto font-medium">{t.interestsSubtitle}</p>

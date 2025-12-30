@@ -50,7 +50,7 @@ export const generateLogo = async (prompt: string) => {
       contents: {
         parts: [
           {
-            text: `Professional modern e-commerce logo for "DZ MARKET". Icon: sleek shopping bag with a subtle integrated Algerian crescent and star. Colors: Emerald Green, White, and Crimson Red. Typography: "DZ MARKET" in bold rounded modern font. Youthful, professional, mobile app icon style, white background, high quality vector style, no watermark, no frame. ${prompt}`,
+            text: `Professional modern e-commerce logo for "DZ MARKET". Icon: sleek modern shopping basket containing a small, stylishly waving Algerian flag. Colors: Emerald Green, White, and Crimson Red. Typography: "DZ MARKET" in bold rounded modern font. Youthful, professional, mobile app icon style, white background, high quality vector style, no watermark, no frame. ${prompt}`,
           },
         ],
       },

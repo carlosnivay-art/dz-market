@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  ShoppingBag, Search, User, MessageSquare, Store, Home, 
-  X, Star, Send, ArrowRight, Plus, Bell, ChevronLeft, ChevronRight, ZoomIn, Video, MessageCircle
+  ShoppingBasket, Search, User, MessageSquare, Store, Home, 
+  X, Star, Send, ArrowRight, Plus, Bell, ChevronLeft, ChevronRight, ZoomIn, Video, MessageCircle, ShoppingBag
 } from 'lucide-react';
 import { Product, User as UserType, Comment } from './types';
 import { MOCK_PRODUCTS, WILAYAS, COLORS, TRANSLATIONS, Language } from './constants';
@@ -136,8 +136,6 @@ const App: React.FC = () => {
     if (role === 'buyer') {
       setCurrentUser(prev => prev ? { ...prev, role: 'buyer' } : null);
       
-      // التعديل: تظهر شاشة الاهتمامات فقط إذا كان المستخدم أنشأ حساباً للتو (isNewUser)
-      // ولم يقم باختيار اهتماماته مسبقاً
       const hasInterests = localStorage.getItem('dz-has-interests');
       
       if (isNewUser && !hasInterests) {
@@ -184,7 +182,6 @@ const App: React.FC = () => {
         user={currentUser!}
         onClose={() => setView('home')} 
         onLogout={() => {
-          // ملاحظة: لا نحذف dz-has-interests عند تسجيل الخروج لكي لا تظهر الشاشة مرة أخرى لمستخدم قديم
           setView('welcome');
         }} 
         currentLang={language}
@@ -234,7 +231,7 @@ const App: React.FC = () => {
         <div className="container mx-auto px-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
             <div className="bg-dz-orange p-1 rounded-lg rotate-12">
-              <ShoppingBag size={20} strokeWidth={2.5} />
+              <ShoppingBasket size={20} strokeWidth={2.5} />
             </div>
             <h1 className="text-xl font-black tracking-tighter uppercase">{t.brand}</h1>
           </div>
@@ -251,24 +248,20 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Search Button (Mobile/Tablet Quick Search) */}
             <button className="md:hidden p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
               <Search size={20} />
             </button>
 
-            {/* Restored Messages Button */}
             <button onClick={() => setView('messages')} className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
               <MessageSquare size={20} />
               <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-dz-orange rounded-full border border-dz-green"></div>
             </button>
 
-            {/* Notifications Button */}
             <button onClick={() => setView('notifications')} className="relative p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
               <Bell size={20} />
               <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-dz-green"></div>
             </button>
 
-            {/* Profile Avatar */}
             <div className="flex items-center gap-2 cursor-pointer bg-white/10 p-0.5 pr-1.5 rounded-full hover:bg-white/20 transition-all" onClick={() => setView('profile')}>
               <img src={currentUser?.avatar} className="w-7 h-7 rounded-full border-2 border-dz-orange shadow-lg" alt="User" />
             </div>
@@ -325,9 +318,8 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="flex gap-4 mt-8">
-                  {/* Buy Button: Orange */}
                   <button onClick={() => handleBuyNow(activeProduct)} className="flex-1 bg-dz-orange text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-dz-orange/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                    <ShoppingBag size={24} /> {t.buyNow}
+                    <ShoppingBasket size={24} /> {t.buyNow}
                   </button>
                 </div>
               </div>
@@ -376,7 +368,6 @@ const App: React.FC = () => {
                 <h3 className="text-lg font-black text-dz-text dark:text-white">{t.trending}</h3>
                 <span className="text-[10px] font-bold text-dz-green">عرض الكل</span>
               </div>
-              {/* Temu Style Grid: 2 columns on mobile, up to 6 on large screens */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                 {products.map(product => (
                   <ProductCard 
