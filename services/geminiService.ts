@@ -5,7 +5,6 @@ import { Product } from "../types";
 // وظيفة المحادثة العامة مع دعم الصور
 export const multimodalAIChat = async (message: string, imageBase64?: string, product?: Product) => {
   try {
-    // ALWAYS initialize a fresh instance of GoogleGenAI before generating content.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const model = "gemini-3-flash-preview";
     const parts: any[] = [{ text: message }];
@@ -20,8 +19,8 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     }
 
     const systemInstruction = product 
-      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن.`
-      : `أنت "VEX"، مساعد ديزاد ماركت الذكي. صممك المهندس ضياف أيمن. ساعد المستخدم في التسوق والبحث في الجزائر.`;
+      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنصة DZ MARKET. ساعد المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن.`
+      : `أنت "VEX"، مساعد منصة DZ MARKET الذكي. صممك المهندس ضياف أيمن. ساعد المستخدم في التسوق والبحث في الجزائر بلهجة جزائرية خفيفة ومحترمة.`;
 
     const response = await ai.models.generateContent({
       model: model,
@@ -38,23 +37,54 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     };
   } catch (error) {
     console.error("Gemini Error:", error);
-    return { text: "عذراً، واجه VEX مشكلة في تحليل طلبك. حاول مجدداً!" };
+    return { text: "عذراً، واجه VEX مشكلة في تحليل طلبك." };
+  }
+};
+
+// وظيفة توليد شعار احترافي
+export const generateLogo = async (prompt: string) => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [
+          {
+            text: `Professional modern e-commerce logo for "DZ MARKET". Icon: sleek shopping bag with a subtle integrated Algerian crescent and star. Colors: Emerald Green, White, and Crimson Red. Typography: "DZ MARKET" in bold rounded modern font. Youthful, professional, mobile app icon style, white background, high quality vector style, no watermark, no frame. ${prompt}`,
+          },
+        ],
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "1:1"
+        }
+      }
+    });
+
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Image Generation Error:", error);
+    return null;
   }
 };
 
 // وظيفة توليد الصوت من النص
 export const generateSpeech = async (text: string) => {
   try {
-    // ALWAYS initialize a fresh instance of GoogleGenAI before generating content.
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: `تحدث بلهجة جزائرية خفيفة وودودة: ${text}` }] }],
       config: {
-        responseModalities: [Modality.AUDIO],
+        responseModalalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' }, // صوت مناسب وودود
+            prebuiltVoiceConfig: { voiceName: 'Kore' },
           },
         },
       },

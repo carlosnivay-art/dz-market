@@ -22,7 +22,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     { 
       role: 'ai', 
       text: activeProduct 
-        ? `مرحباً! أنا "VEX"، المساعد الذكي لهذا المنتج. يمكنك سؤالي كتابةً أو صوتاً، أو حتى إرسال صورة للمقارنة!`
+        ? `مرحباً! أنا "VEX"، المساعد الذكي لـ DZ Market. يمكنك سؤالي كتابةً أو صوتاً، أو حتى إرسال صورة للمقارنة!`
         : 'أهلاً بك في DZ Market! أنا "VEX". يمكنني فهم صورك، صوتك، وأسئلتك حول السوق الجزائري 🇩🇿' 
     }
   ]);
@@ -125,8 +125,8 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         
-        // SPEED UP playback for better responsiveness (1.15x is a sweet spot)
-        source.playbackRate.value = 1.15;
+        // SPEED UP playback for maximum responsiveness (1.25x is highly efficient)
+        source.playbackRate.value = 1.25;
         
         source.connect(ctx.destination);
         source.onended = () => {
@@ -154,7 +154,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
             <Sparkles size={20} />
           </div>
           <div>
-            <p className="font-black text-sm">VEX AI 🧠</p>
+            <p className="font-black text-sm">VEX AI @ DZ Market 🧠</p>
             <p className="text-[10px] text-white/70">مساعد ذكي فوري</p>
           </div>
         </div>
