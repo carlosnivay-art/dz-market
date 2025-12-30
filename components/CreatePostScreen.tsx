@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Image as ImageIcon, Camera, Send, Sparkles, Loader2, ArrowRight } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { suggestPostCaption } from '../services/geminiService';
 import { Language, TRANSLATIONS } from '../constants';
 
 interface CreatePostScreenProps {
@@ -26,21 +26,12 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ onClose, onPublish,
     }
   };
 
-  const suggestCaption = async () => {
+  const handleSuggest = async () => {
     if (!text && !image) return;
     setIsSuggesting(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `اقترح نص تسويقي جذاب باللهجة الجزائرية لمنشور في DZ MARKET. النص الحالي للمستخدم: "${text}". اجعله قصيراً ومشوقاً مع إيموجي.`,
-      });
-      setText(response.text || text);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSuggesting(false);
-    }
+    const suggestion = await suggestPostCaption(text, image || undefined);
+    if (suggestion) setText(suggestion);
+    setIsSuggesting(false);
   };
 
   const handlePublish = () => {
@@ -77,7 +68,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ onClose, onPublish,
             className="w-full h-40 bg-gray-50 dark:bg-gray-900 border-none rounded-[2rem] p-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white resize-none"
           />
           <button 
-            onClick={suggestCaption}
+            onClick={handleSuggest}
             disabled={isSuggesting}
             className="absolute bottom-4 left-4 bg-white dark:bg-gray-800 p-2 px-4 rounded-xl shadow-md flex items-center gap-2 text-[10px] font-black text-dz-orange hover:scale-105 active:scale-95 transition-all border border-dz-orange/20"
           >

@@ -1,12 +1,18 @@
 
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Product } from "../types";
 
-// وظيفة المحادثة العامة مع دعم الصور
+// وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح)
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+/**
+ * محادثة متعددة الوسائط (نص، صورة، بحث)
+ */
 export const multimodalAIChat = async (message: string, imageBase64?: string, product?: Product) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAI();
     const model = "gemini-3-flash-preview";
+    
     const parts: any[] = [{ text: message }];
 
     if (imageBase64) {
@@ -19,8 +25,8 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     }
 
     const systemInstruction = product 
-      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنصة DZ MARKET. ساعد المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن.`
-      : `أنت "VEX"، مساعد منصة DZ MARKET الذكي. صممك المهندس ضياف أيمن. ساعد المستخدم في التسوق والبحث في الجزائر بلهجة جزائرية خفيفة ومحترمة.`;
+      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنصة DZ MARKET. ساعد المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن. أجب بلهجة جزائرية خفيفة.`
+      : `أنت "VEX"، مساعد منصة DZ MARKET الذكي. صممك المهندس ضياف أيمن. مهمتك مساعدة المستخدمين في التسوق، البحث عن المنتجات، وفهم الصور. أجب دائماً بلهجة جزائرية محببة واحترافية. استخدم البحث في جوجل إذا سئلت عن أسعار حالية أو أخبار في الجزائر.`;
 
     const response = await ai.models.generateContent({
       model: model,
@@ -37,27 +43,58 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     };
   } catch (error) {
     console.error("Gemini Error:", error);
-    return { text: "عذراً، واجه VEX مشكلة في تحليل طلبك." };
+    return { text: "عذراً، واجه VEX مشكلة في الاتصال بالذكاء الاصطناعي. يرجى المحاولة لاحقاً." };
   }
 };
 
-// وظيفة توليد شعار احترافي
+/**
+ * اقتراح نصوص تسويقية للمنشورات
+ */
+export const suggestPostCaption = async (userText: string, imageBase64?: string) => {
+  try {
+    const ai = getAI();
+    const parts: any[] = [
+      { text: `أنت خبير تسويق في DZ MARKET. حول النص التالي أو محتوى الصورة إلى منشور تسويقي "هبال" بلهجة جزائرية جذابة مع إيموجي. النص الأصلي: "${userText}"` }
+    ];
+
+    if (imageBase64) {
+      parts.push({
+        inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] || imageBase64 }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: { parts },
+      config: {
+        systemInstruction: "أنت كاتب محتوى جزائري مبدع لمنصة DZ MARKET. اجعل منشوراتك قصيرة، قوية، وتستخدم لغة الشباب الجزائري.",
+      }
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error("Post Suggestion Error:", error);
+    return userText;
+  }
+};
+
+/**
+ * توليد الشعار بالذكاء الاصطناعي
+ */
 export const generateLogo = async (prompt: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
         parts: [
           {
-            text: `Professional modern e-commerce logo for "DZ MARKET". Icon: sleek modern shopping basket containing a small, stylishly waving Algerian flag. Colors: Emerald Green, White, and Crimson Red. Typography: "DZ MARKET" in bold rounded modern font. Youthful, professional, mobile app icon style, white background, high quality vector style, no watermark, no frame. ${prompt}`,
+            text: `Modern professional e-commerce logo for "DZ MARKET". Design: A sleek modern shopping basket with a stylized Algerian flag flowing inside. Colors: Emerald Green, White, and Deep Red. Typography: "DZ MARKET" in bold, rounded, modern font. Clean background, premium vector style app icon. ${prompt}`,
           },
         ],
       },
       config: {
-        imageConfig: {
-          aspectRatio: "1:1"
-        }
+        imageConfig: { aspectRatio: "1:1" }
       }
     });
 
@@ -68,20 +105,22 @@ export const generateLogo = async (prompt: string) => {
     }
     return null;
   } catch (error) {
-    console.error("Image Generation Error:", error);
+    console.error("Logo Generation Error:", error);
     return null;
   }
 };
 
-// وظيفة توليد الصوت من النص
+/**
+ * تحويل النص إلى صوت (VEX Voice)
+ */
 export const generateSpeech = async (text: string) => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `تحدث بلهجة جزائرية خفيفة وودودة: ${text}` }] }],
+      contents: [{ parts: [{ text: `تحدث بلهجة جزائرية ودودة: ${text}` }] }],
       config: {
-        responseModalalities: [Modality.AUDIO],
+        responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: 'Kore' },
@@ -90,20 +129,18 @@ export const generateSpeech = async (text: string) => {
       },
     });
 
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    return base64Audio;
+    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   } catch (error) {
     console.error("TTS Error:", error);
     return null;
   }
 };
 
-// الدوال المساعدة لفك تشفير الصوت
+// وظائف معالجة الصوت المساعدة
 export const decodeAudio = (base64: string) => {
   const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
