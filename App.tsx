@@ -90,14 +90,27 @@ const App: React.FC = () => {
      return (localStorage.getItem('dz-lang') as Language) || 'ar';
   });
   
-  const [currentUser, setCurrentUser] = useState<UserType | null>({
-    id: 'u1',
-    name: 'أمين دزيري',
-    role: 'buyer',
-    phone: '0550112233',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
-    email: 'amin@tajerly.com'
+  const [currentUser, setCurrentUser] = useState<UserType | null>(() => {
+    const savedUser = localStorage.getItem('dz-user-info');
+    if (savedUser) {
+      return JSON.parse(savedUser);
+    }
+    return {
+      id: 'u1',
+      name: 'أمين دزيري',
+      role: 'buyer',
+      phone: '0550112233',
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+      email: 'amin@tajerly.com',
+      wilaya: 'Alger',
+      bio: 'أبحث دائماً عن أفضل الصفقات في الجزائر 🇩🇿. مهتم بالإلكترونيات والمنتجات المبتكرة.'
+    };
   });
+
+  const handleUpdateUser = (updatedInfo: any) => {
+    setCurrentUser(prev => prev ? { ...prev, ...updatedInfo } : null);
+    localStorage.setItem('dz-user-info', JSON.stringify({ ...currentUser, ...updatedInfo }));
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -200,6 +213,7 @@ const App: React.FC = () => {
         }} 
         currentLang={language}
         onLangChange={changeLanguage}
+        onUpdateUser={handleUpdateUser}
       />
     );
   }

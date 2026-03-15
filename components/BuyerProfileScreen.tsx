@@ -16,6 +16,7 @@ interface BuyerProfileScreenProps {
   onLogout: () => void;
   currentLang: Language;
   onLangChange: (lang: Language) => void;
+  onUpdateUser: (user: any) => void;
 }
 
 const MOCK_USER_POSTS = [
@@ -27,7 +28,7 @@ const MOCK_USER_POSTS = [
   { url: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80", likes: 145, comments: 19 },
 ];
 
-const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, onLogout, currentLang, onLangChange }) => {
+const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, onLogout, currentLang, onLangChange, onUpdateUser }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [activeSettingsSection, setActiveSettingsSection] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
@@ -46,6 +47,8 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
         currentLang={currentLang}
         onLangChange={onLangChange}
         initialSection={activeSettingsSection}
+        user={user}
+        onUpdateUser={onUpdateUser}
       />
     );
   }
@@ -108,13 +111,13 @@ const BuyerProfileScreen: React.FC<BuyerProfileScreenProps> = ({ user, onClose, 
 
           <div className="space-y-1 mb-4">
             <h3 className="text-xl font-black text-gray-800 dark:text-white">{user.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{roleLabel} | محب للتكنولوجيا 📱</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{roleLabel} | {user.bio ? user.bio.substring(0, 30) + '...' : 'محب للتكنولوجيا 📱'}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-xs">
-              أبحث دائماً عن أفضل الصفقات في الجزائر 🇩🇿. مهتم بالإلكترونيات والمنتجات المبتكرة.
+              {user.bio || 'أبحث دائماً عن أفضل الصفقات في الجزائر 🇩🇿. مهتم بالإلكترونيات والمنتجات المبتكرة.'}
             </p>
             <div className="flex items-center gap-2 pt-2">
               <MapPin size={14} className="text-dz-green" />
-              <span className="text-xs font-bold text-dz-green">الجزائر العاصمة</span>
+              <span className="text-xs font-bold text-dz-green">{user.wilaya || 'الجزائر العاصمة'}</span>
             </div>
           </div>
 

@@ -16,9 +16,19 @@ interface SettingsScreenProps {
   currentLang: Language;
   onLangChange: (lang: Language) => void;
   initialSection?: string | null;
+  user: any;
+  onUpdateUser: (user: any) => void;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, currentLang, onLangChange, initialSection = null }) => {
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ 
+  onClose, 
+  onLogout, 
+  currentLang, 
+  onLangChange, 
+  initialSection = null,
+  user,
+  onUpdateUser
+}) => {
   const [activeSubSection, setActiveSubSection] = useState<string | null>(initialSection);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -26,11 +36,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
 
   // User Info States
   const [userInfo, setUserInfo] = useState({
-    name: 'أمين دزيري',
-    phone: '0550112233',
-    email: 'amin@dz-market.com',
-    wilaya: 'Alger',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+    name: user?.name || '',
+    phone: user?.phone || '',
+    email: user?.email || '',
+    wilaya: user?.wilaya || 'Alger',
+    avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+    bio: user?.bio || '',
+    gender: user?.gender || 'male',
+    address: user?.address || ''
   });
 
   // Notification States
@@ -157,8 +170,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
   const handleSaveAction = (type: string) => {
     setIsSaving(true);
     setSaveSuccess(false);
+    
+    // Simulate API call
     setTimeout(() => {
-      if (type === 'appearance') onLangChange(tempLang);
+      if (type === 'account') {
+        onUpdateUser(userInfo);
+        // Also persist to localStorage for demo purposes
+        localStorage.setItem('dz-user-info', JSON.stringify(userInfo));
+      }
+      
+      if (type === 'appearance') {
+        onLangChange(tempLang);
+      }
+      
       setIsSaving(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
@@ -171,7 +195,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
         <button onClick={() => setActiveSubSection(null)} className="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:bg-gray-50 text-dz-green transition-all">
           <ArrowRight size={20} className={t.dir === 'rtl' ? '' : 'rotate-180'} />
         </button>
-        <h3 className="text-xl font-black text-dz-text dark:text-white">تعديل بيانات الحساب</h3>
+        <h3 className="text-xl font-black text-dz-text dark:text-white">{t.accountInfo}</h3>
       </div>
 
       {/* Avatar Upload Section */}
@@ -198,13 +222,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
           accept="image/*" 
           onChange={handleAvatarChange} 
         />
-        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">تغيير صورة الملف الشخصي</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          {currentLang === 'ar' ? 'تغيير صورة الملف الشخصي' : 'Change Profile Picture'}
+        </p>
       </div>
 
       <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-dz-border dark:border-gray-700 card-shadow space-y-5">
         <div className="space-y-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">الاسم الكامل</label>
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+            </label>
             <input 
               type="text" 
               className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white"
@@ -213,7 +241,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">رقم الهاتف</label>
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+            </label>
             <input 
               type="tel" 
               className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white"
@@ -222,7 +252,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">البريد الإلكتروني</label>
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}
+            </label>
             <input 
               type="email" 
               className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white"
@@ -231,20 +263,64 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onLogout, curr
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">الولاية</label>
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'الولاية' : 'Wilaya'}
+            </label>
             <select 
-              className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white"
+              className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white appearance-none"
               value={userInfo.wilaya}
               onChange={(e) => setUserInfo({...userInfo, wilaya: e.target.value})}
             >
               {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
             </select>
           </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'الجنس' : 'Gender'}
+            </label>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setUserInfo({...userInfo, gender: 'male'})}
+                className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${userInfo.gender === 'male' ? 'bg-dz-green text-white shadow-lg' : 'bg-gray-50 dark:bg-gray-900 text-gray-400'}`}
+              >
+                {currentLang === 'ar' ? 'ذكر' : 'Male'}
+              </button>
+              <button 
+                onClick={() => setUserInfo({...userInfo, gender: 'female'})}
+                className={`flex-1 py-3 rounded-2xl font-bold text-sm transition-all ${userInfo.gender === 'female' ? 'bg-dz-orange text-white shadow-lg' : 'bg-gray-50 dark:bg-gray-900 text-gray-400'}`}
+              >
+                {currentLang === 'ar' ? 'أنثى' : 'Female'}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'العنوان بالتفصيل' : 'Detailed Address'}
+            </label>
+            <input 
+              type="text" 
+              className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white"
+              placeholder={currentLang === 'ar' ? "مثال: حي 500 مسكن، عمارة 05، رقم 12" : "e.g. 500 Housing, Bldg 05, Apt 12"}
+              value={userInfo.address}
+              onChange={(e) => setUserInfo({...userInfo, address: e.target.value})}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-black text-gray-400 mr-2 uppercase">
+              {currentLang === 'ar' ? 'نبذة شخصية (Bio)' : 'Bio'}
+            </label>
+            <textarea 
+              className="w-full bg-gray-50 dark:bg-gray-900 border-none rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-dz-green dark:text-white min-h-[100px] resize-none"
+              placeholder={currentLang === 'ar' ? "أخبرنا عن نفسك..." : "Tell us about yourself..."}
+              value={userInfo.bio}
+              onChange={(e) => setUserInfo({...userInfo, bio: e.target.value})}
+            />
+          </div>
         </div>
       </div>
 
       <button onClick={() => handleSaveAction('account')} className="w-full bg-dz-green text-white py-4 rounded-2xl font-black shadow-xl hover:bg-opacity-90 transition-all">
-        {isSaving ? <Loader2 className="animate-spin mx-auto" /> : saveSuccess ? 'تم الحفظ بنجاح!' : 'حفظ التعديلات'}
+        {isSaving ? <Loader2 className="animate-spin mx-auto" /> : saveSuccess ? (currentLang === 'ar' ? 'تم الحفظ بنجاح!' : 'Saved Successfully!') : (currentLang === 'ar' ? 'حفظ التعديلات' : 'Save Changes')}
       </button>
     </div>
   );

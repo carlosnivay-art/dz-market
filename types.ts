@@ -35,6 +35,10 @@ export interface User {
   phone: string;
   avatar: string;
   isStudent?: boolean;
+  wilaya?: string;
+  bio?: string;
+  gender?: 'male' | 'female';
+  address?: string;
 }
 
 export interface SalesData {

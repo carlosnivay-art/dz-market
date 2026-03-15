@@ -25,8 +25,8 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     }
 
     const systemInstruction = product 
-      ? `أنت مساعد مبيعات ذكي يدعى "VEX" لمنصة DZ MARKET. ساعد المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن. أجب بلهجة جزائرية خفيفة.`
-      : `أنت "VEX"، مساعد منصة DZ MARKET الذكي. صممك المهندس ضياف أيمن. مهمتك مساعدة المستخدمين في التسوق، البحث عن المنتجات، وفهم الصور. أجب دائماً بلهجة جزائرية محببة واحترافية. استخدم البحث في جوجل إذا سئلت عن أسعار حالية أو أخبار في الجزائر.`;
+      ? `أنتِ "VEX"، مساعدة مبيعات ذكية في الثلاثينيات من عمرك، تتميزين بالرقي واللطف. ساعدي المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن. أجيبي بصوت أنثوي ناضج، جذاب، وودود بلهجة جزائرية راقية.`
+      : `أنتِ "VEX"، المساعدة الذكية لمنصة DZ MARKET. عمركِ في الثلاثينيات، تتمتعين بشخصية مثقفة، رزينة وجذابة. صممكِ المهندس ضياف أيمن. مهمتكِ هي مرافقة المستخدمين في تجربة تسوق ممتعة. أجيبي دائماً بصوت أنثوي رزين ومريح للأذن، بلهجة جزائرية "بيضاء" مفهومة وأنيقة. استخدمي البحث في جوجل للمعلومات المحدثة.`;
 
     const response = await ai.models.generateContent({
       model: model,
@@ -43,7 +43,7 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     };
   } catch (error) {
     console.error("Gemini Error:", error);
-    return { text: "عذراً، واجه VEX مشكلة في الاتصال بالذكاء الاصطناعي. يرجى المحاولة لاحقاً." };
+    return { text: "عذراً، واجهت VEX مشكلة في الاتصال. يرجى المحاولة لاحقاً." };
   }
 };
 
@@ -54,7 +54,7 @@ export const suggestPostCaption = async (userText: string, imageBase64?: string)
   try {
     const ai = getAI();
     const parts: any[] = [
-      { text: `أنت خبير تسويق في DZ MARKET. حول النص التالي أو محتوى الصورة إلى منشور تسويقي "هبال" بلهجة جزائرية جذابة مع إيموجي. النص الأصلي: "${userText}"` }
+      { text: `بصفتكِ خبيرة تسويق جزائرية في الثلاثينيات، حولي هذا المحتوى إلى منشور تسويقي احترافي وجذاب بلهجة جزائرية قريبة من القلب. النص: "${userText}"` }
     ];
 
     if (imageBase64) {
@@ -67,7 +67,7 @@ export const suggestPostCaption = async (userText: string, imageBase64?: string)
       model: "gemini-3-flash-preview",
       contents: { parts },
       config: {
-        systemInstruction: "أنت كاتب محتوى جزائري مبدع لمنصة DZ MARKET. اجعل منشوراتك قصيرة، قوية، وتستخدم لغة الشباب الجزائري.",
+        systemInstruction: "أنتِ كاتبة محتوى جزائرية مبدعة وناضجة. منشوراتكِ تجمع بين الأناقة ولغة الشباب الجزائرية الجذابة.",
       }
     });
 
@@ -111,14 +111,15 @@ export const generateLogo = async (prompt: string) => {
 };
 
 /**
- * تحويل النص إلى صوت (VEX Voice)
+ * تحويل النص إلى صوت (VEX Voice - Elegant Female in her 30s)
  */
 export const generateSpeech = async (text: string) => {
   try {
     const ai = getAI();
+    // استخدام "Kore" مع توجيه دقيق لنبرة الثلاثينيات الجذابة
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `تحدث بلهجة جزائرية ودودة: ${text}` }] }],
+      contents: [{ parts: [{ text: `بصوت امرأة جزائرية مثقفة في الثلاثينيات من عمرها، صوتها رزين، فائق الجمال، ومريح جداً للمستمع، تحدثي بلهجة جزائرية بيضاء مفهومة: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {

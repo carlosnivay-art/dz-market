@@ -10,9 +10,9 @@ export const COLORS = {
 
 export const WILAYAS = [
   "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa", "Biskra", "Béchar", "Blida", "Bouira",
-  "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzو", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda",
+  "Tamanrasset", "Tébessa", "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger", "Djelfa", "Jijel", "Sétif", "Saïda",
   "Skikda", "Sidi Bel Abbès", "Annabba", "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila", "Mascara",
-  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj", "Boumerدès", "El Tarf", "Tindouf", 
+  "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arreridj", "Boumerdès", "El Tarf", "Tindouf", 
   "Tissemsilt", "El Oued", "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla", "Naâma", "Aïn Témouchent",
   "Ghardaïa", "Relizane", "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès", "In Salah", 
   "In Guezzam", "Touggourt", "Djanet", "El M'Ghair", "El Meniaa"
@@ -73,7 +73,8 @@ export const TRANSLATIONS = {
     createPost: 'إنشاء منشور',
     postPlaceholder: 'واش راه في بالك اليوم؟ شارك تجربتك أو اعرض سلعتك...',
     publishPost: 'نشر المنشور',
-    aiSuggest: 'اقتراح ذكي'
+    aiSuggest: 'اقتراح ذكي',
+    accountInfo: 'بيانات الحساب'
   },
   fr: {
     dir: 'ltr',
@@ -110,7 +111,8 @@ export const TRANSLATIONS = {
     createPost: 'Créer un post',
     postPlaceholder: 'Quoi de neuf ? Partagez votre expérience...',
     publishPost: 'Publier',
-    aiSuggest: 'Suggérer IA'
+    aiSuggest: 'Suggérer IA',
+    accountInfo: 'Infos Compte'
   },
   en: {
     dir: 'ltr',
@@ -147,7 +149,8 @@ export const TRANSLATIONS = {
     createPost: 'Create Post',
     postPlaceholder: 'What\'s on your mind? Share your experience...',
     publishPost: 'Publish',
-    aiSuggest: 'AI Suggest'
+    aiSuggest: 'AI Suggest',
+    accountInfo: 'Account Info'
   }
 };
 
