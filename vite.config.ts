@@ -5,11 +5,36 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     
-    // Get key from various possible environment locations
-    const rawKey = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+    // Prioritize actual process.env keys first to prevent placeholders in local files from overriding them
+    const keysToTry = [
+      process.env.GEMINI_API_KEY,
+      process.env.VITE_GEMINI_API_KEY,
+      env.GEMINI_API_KEY,
+      env.VITE_GEMINI_API_KEY
+    ];
     
-    // Clean key from quotes if present
-    const geminiKey = rawKey.trim().replace(/^["']|["']$/g, '');
+    let geminiKey = '';
+    for (const key of keysToTry) {
+      if (key) {
+        const cleaned = key.trim().replace(/^["']|["']$/g, '');
+        if (
+          cleaned && 
+          cleaned !== 'PLACEHOLDER_API_KEY' && 
+          cleaned !== 'your_gemini_api_key_here' && 
+          cleaned !== 'your_api_key_here' &&
+          !cleaned.toLowerCase().includes('placeholder')
+        ) {
+          geminiKey = cleaned;
+          break;
+        }
+      }
+    }
+
+    // Fallback to whatever is available if no valid key was found
+    if (!geminiKey) {
+      const rawFallback = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+      geminiKey = rawFallback.trim().replace(/^["']|["']$/g, '');
+    }
     
     return {
       server: {

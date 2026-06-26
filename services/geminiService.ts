@@ -5,18 +5,32 @@ import { Product } from "../types";
 // وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح وتوفر تهيئة كسولة مرنة)
 const getAI = () => {
   // Check all possible environment variable sources to find the key
-  const rawKey = 
-    process.env.GEMINI_API_KEY || 
-    process.env.API_KEY || 
-    process.env.VITE_GEMINI_API_KEY ||
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY) ||
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY) ||
-    "";
-    
-  // Clean surrounding quotes and trim whitespace
-  const key = rawKey.trim().replace(/^["']|["']$/g, '');
+  const keysToTry = [
+    process.env.GEMINI_API_KEY,
+    process.env.API_KEY,
+    process.env.VITE_GEMINI_API_KEY,
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY),
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY)
+  ];
+  
+  let key = "";
+  for (const k of keysToTry) {
+    if (k) {
+      const cleaned = k.trim().replace(/^["']|["']$/g, '');
+      if (
+        cleaned && 
+        cleaned !== "PLACEHOLDER_API_KEY" && 
+        cleaned !== "your_gemini_api_key_here" && 
+        cleaned !== "your_api_key_here" &&
+        !cleaned.toLowerCase().includes("placeholder")
+      ) {
+        key = cleaned;
+        break;
+      }
+    }
+  }
 
-  if (!key || key === "" || key.includes("your_gemini_api_key_here")) {
+  if (!key || key === "") {
     throw new Error("MISSING_API_KEY");
   }
   return new GoogleGenAI({ 
