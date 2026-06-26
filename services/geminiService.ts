@@ -1,155 +1,73 @@
-
-import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Product } from "../types";
 
-// وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح وتوفر تهيئة كسولة مرنة)
-const getAI = () => {
-  // Check all possible environment variable sources to find the key, prioritizing API_KEY and VITE_API_KEY
-  const keysToTry = [
-    process.env.API_KEY,
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY),
-    process.env.GEMINI_API_KEY,
-    process.env.VITE_GEMINI_API_KEY,
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY)
-  ];
-  
-  let key = "";
-  for (const k of keysToTry) {
-    if (k) {
-      const cleaned = k.trim().replace(/^["']|["']$/g, '');
-      if (
-        cleaned && 
-        cleaned !== "PLACEHOLDER_API_KEY" && 
-        cleaned !== "your_gemini_api_key_here" && 
-        cleaned !== "your_api_key_here" &&
-        !cleaned.toLowerCase().includes("placeholder")
-      ) {
-        key = cleaned;
-        break;
-      }
-    }
-  }
-
-  if (!key || key === "") {
-    throw new Error("MISSING_API_KEY");
-  }
-  return new GoogleGenAI({ 
-    apiKey: key,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
-  });
-};
-
 /**
- * محادثة متعددة الوسائط (نص، صورة، بحث)
+ * محادثة متعددة الوسائط (نص، صورة، بحث) عبر السيرفر
  */
 export const multimodalAIChat = async (message: string, imageBase64?: string, product?: Product) => {
   try {
-    const ai = getAI();
-    const model = "gemini-3.5-flash";
-    
-    const parts: any[] = [{ text: message }];
-
-    if (imageBase64) {
-      parts.push({
-        inlineData: {
-          mimeType: "image/jpeg",
-          data: imageBase64,
-        },
-      });
-    }
-
-    const systemInstruction = product 
-      ? `أنتِ "VEX"، مساعدة مبيعات ذكية في الثلاثينيات من عمرك، تتميزين بالرقي واللطف. ساعدي المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن. أجيبي بصوت أنثوي ناضج، جذاب، وودود بلهجة جزائرية راقية.`
-      : `أنتِ "VEX"، المساعدة الذكية لمنصة DZ MARKET. عمركِ في الثلاثينيات، تتمتعين بشخصية مثقفة، رزينة وجذابة. صممكِ المهندس ضياف أيمن. مهمتكِ هي مرافقة المستخدمين في تجربة تسوق ممتعة. أجيبي دائماً بصوت أنثوي رزين ومريح للأذن، بلهجة جزائرية "بيضاء" مفهومة وأنيقة. استخدمي البحث في جوجل للمعلومات المحدثة.`;
-
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: { parts },
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: systemInstruction,
-      }
+    const response = await fetch("/api/gemini/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message, imageBase64, product }),
     });
 
-    return {
-      text: response.text,
-      sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
-    };
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      if (errData.error === "MISSING_API_KEY") {
+        return { 
+          text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير API_KEY في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
+        };
+      }
+      throw new Error(errData.text || "Network error");
+    }
+
+    return await response.json();
   } catch (error: any) {
     console.error("Gemini Error:", error);
-    if (error?.message === "MISSING_API_KEY") {
-      return { 
-        text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير API_KEY أو GEMINI_API_KEY في ملف .env محلياً أو في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
-      };
-    }
     return { text: "عذراً، واجهت VEX مشكلة في الاتصال. يرجى المحاولة لاحقاً." };
   }
 };
 
 /**
- * اقتراح نصوص تسويقية للمنشورات
+ * اقتراح نصوص تسويقية للمنشورات عبر السيرفر
  */
 export const suggestPostCaption = async (userText: string, imageBase64?: string) => {
   try {
-    const ai = getAI();
-    const parts: any[] = [
-      { text: `بصفتكِ خبيرة تسويق جزائرية في الثلاثينيات، حولي هذا المحتوى إلى منشور تسويقي احترافي وجذاب بلهجة جزائرية قريبة من القلب. النص: "${userText}"` }
-    ];
-
-    if (imageBase64) {
-      parts.push({
-        inlineData: { mimeType: "image/jpeg", data: imageBase64.split(',')[1] || imageBase64 }
-      });
-    }
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: { parts },
-      config: {
-        systemInstruction: "أنتِ كاتبة محتوى جزائرية مبدعة وناضجة. منشوراتكِ تجمع بين الأناقة ولغة الشباب الجزائرية الجذابة.",
-      }
+    const response = await fetch("/api/gemini/suggest-caption", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userText, imageBase64 }),
     });
 
-    return response.text;
+    if (!response.ok) throw new Error("Network response was not ok");
+    const data = await response.json();
+    return data.text;
   } catch (error: any) {
     console.error("Post Suggestion Error:", error);
-    if (error?.message === "MISSING_API_KEY") {
-      return "⚠️ (مفتاح API غير متوفر) " + userText;
-    }
     return userText;
   }
 };
 
 /**
- * توليد الشعار بالذكاء الاصطناعي
+ * توليد الشعار بالذكاء الاصطناعي عبر السيرفر
  */
 export const generateLogo = async (prompt: string) => {
   try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          {
-            text: `Modern professional e-commerce logo for "DZ MARKET". Design: A sleek modern shopping basket with a stylized Algerian flag flowing inside. Colors: Emerald Green, White, and Deep Red. Typography: "DZ MARKET" in bold, rounded, modern font. Clean background, premium vector style app icon. ${prompt}`,
-          },
-        ],
+    const response = await fetch("/api/gemini/generate-logo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      config: {
-        imageConfig: { aspectRatio: "1:1" }
-      }
+      body: JSON.stringify({ prompt }),
     });
 
-    for (const part of response.candidates[0].content.parts) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-    return null;
+    if (!response.ok) throw new Error("Network response was not ok");
+    const data = await response.json();
+    return data.imageUrl;
   } catch (error: any) {
     console.error("Logo Generation Error:", error);
     return null;
@@ -157,33 +75,28 @@ export const generateLogo = async (prompt: string) => {
 };
 
 /**
- * تحويل النص إلى صوت (VEX Voice - Elegant Female in her 30s)
+ * تحويل النص إلى صوت (VEX Voice) عبر السيرفر
  */
 export const generateSpeech = async (text: string) => {
   try {
-    const ai = getAI();
-    // استخدام "Kore" مع توجيه دقيق لنبرة الثلاثينيات الجذابة
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-tts-preview",
-      contents: [{ parts: [{ text: `بصوت امرأة جزائرية مثقفة في الثلاثينيات من عمرها، صوتها رزين، فائق الجمال، ومريح جداً للمستمع، تحدثي بلهجة جزائرية بيضاء مفهومة: ${text}` }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
+    const response = await fetch("/api/gemini/generate-speech", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ text }),
     });
 
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!response.ok) throw new Error("Network response was not ok");
+    const data = await response.json();
+    return data.audioBase64;
   } catch (error: any) {
     console.error("TTS Error:", error);
     return null;
   }
 };
 
-// وظائف معالجة الصوت المساعدة
+// وظائف معالجة الصوت المساعدة (مطلوبة في الواجهة الأمامية)
 export const decodeAudio = (base64: string) => {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
