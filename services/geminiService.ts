@@ -4,8 +4,19 @@ import { Product } from "../types";
 
 // وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح وتوفر تهيئة كسولة مرنة)
 const getAI = () => {
-  const key = process.env.API_KEY || process.env.GEMINI_API_KEY;
-  if (!key || key.trim() === "" || key.includes("your_gemini_api_key_here")) {
+  // Check all possible environment variable sources to find the key
+  const rawKey = 
+    process.env.GEMINI_API_KEY || 
+    process.env.API_KEY || 
+    process.env.VITE_GEMINI_API_KEY ||
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY) ||
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY) ||
+    "";
+    
+  // Clean surrounding quotes and trim whitespace
+  const key = rawKey.trim().replace(/^["']|["']$/g, '');
+
+  if (!key || key === "" || key.includes("your_gemini_api_key_here")) {
     throw new Error("MISSING_API_KEY");
   }
   return new GoogleGenAI({ 
