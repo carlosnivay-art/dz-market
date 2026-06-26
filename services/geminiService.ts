@@ -4,13 +4,13 @@ import { Product } from "../types";
 
 // وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح وتوفر تهيئة كسولة مرنة)
 const getAI = () => {
-  // Check all possible environment variable sources to find the key
+  // Check all possible environment variable sources to find the key, prioritizing API_KEY and VITE_API_KEY
   const keysToTry = [
-    process.env.GEMINI_API_KEY,
     process.env.API_KEY,
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY),
+    process.env.GEMINI_API_KEY,
     process.env.VITE_GEMINI_API_KEY,
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY),
-    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_API_KEY)
+    (typeof import.meta !== "undefined" && (import.meta as any).env && (import.meta as any).env.VITE_GEMINI_API_KEY)
   ];
   
   let key = "";
@@ -83,7 +83,7 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
     console.error("Gemini Error:", error);
     if (error?.message === "MISSING_API_KEY") {
       return { 
-        text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير GEMINI_API_KEY في ملف .env محلياً أو في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
+        text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير API_KEY أو GEMINI_API_KEY في ملف .env محلياً أو في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
       };
     }
     return { text: "عذراً، واجهت VEX مشكلة في الاتصال. يرجى المحاولة لاحقاً." };

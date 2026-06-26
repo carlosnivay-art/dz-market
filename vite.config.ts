@@ -7,8 +7,12 @@ export default defineConfig(({ mode }) => {
     
     // Prioritize actual process.env keys first to prevent placeholders in local files from overriding them
     const keysToTry = [
+      process.env.API_KEY,
+      process.env.VITE_API_KEY,
       process.env.GEMINI_API_KEY,
       process.env.VITE_GEMINI_API_KEY,
+      env.API_KEY,
+      env.VITE_API_KEY,
       env.GEMINI_API_KEY,
       env.VITE_GEMINI_API_KEY
     ];
@@ -32,7 +36,16 @@ export default defineConfig(({ mode }) => {
 
     // Fallback to whatever is available if no valid key was found
     if (!geminiKey) {
-      const rawFallback = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+      const rawFallback = 
+        env.API_KEY || 
+        env.VITE_API_KEY || 
+        env.GEMINI_API_KEY || 
+        env.VITE_GEMINI_API_KEY || 
+        process.env.API_KEY || 
+        process.env.VITE_API_KEY || 
+        process.env.GEMINI_API_KEY || 
+        process.env.VITE_GEMINI_API_KEY || 
+        '';
       geminiKey = rawFallback.trim().replace(/^["']|["']$/g, '');
     }
     
