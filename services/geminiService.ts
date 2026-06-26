@@ -2,8 +2,21 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Product } from "../types";
 
-// وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح)
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// وظيفة الحصول على نسخة من AI (تستخدم داخل الدوال لضمان تحديث المفتاح وتوفر تهيئة كسولة مرنة)
+const getAI = () => {
+  const key = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  if (!key || key.trim() === "" || key.includes("your_gemini_api_key_here")) {
+    throw new Error("MISSING_API_KEY");
+  }
+  return new GoogleGenAI({ 
+    apiKey: key,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      }
+    }
+  });
+};
 
 /**
  * محادثة متعددة الوسائط (نص، صورة، بحث)
@@ -11,7 +24,7 @@ const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 export const multimodalAIChat = async (message: string, imageBase64?: string, product?: Product) => {
   try {
     const ai = getAI();
-    const model = "gemini-3-flash-preview";
+    const model = "gemini-3.5-flash";
     
     const parts: any[] = [{ text: message }];
 
@@ -41,8 +54,13 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
       text: response.text,
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Error:", error);
+    if (error?.message === "MISSING_API_KEY") {
+      return { 
+        text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير GEMINI_API_KEY في ملف .env محلياً أو في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
+      };
+    }
     return { text: "عذراً، واجهت VEX مشكلة في الاتصال. يرجى المحاولة لاحقاً." };
   }
 };
@@ -64,7 +82,7 @@ export const suggestPostCaption = async (userText: string, imageBase64?: string)
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.5-flash",
       contents: { parts },
       config: {
         systemInstruction: "أنتِ كاتبة محتوى جزائرية مبدعة وناضجة. منشوراتكِ تجمع بين الأناقة ولغة الشباب الجزائرية الجذابة.",
@@ -72,8 +90,11 @@ export const suggestPostCaption = async (userText: string, imageBase64?: string)
     });
 
     return response.text;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Post Suggestion Error:", error);
+    if (error?.message === "MISSING_API_KEY") {
+      return "⚠️ (مفتاح API غير متوفر) " + userText;
+    }
     return userText;
   }
 };
@@ -104,7 +125,7 @@ export const generateLogo = async (prompt: string) => {
       }
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Logo Generation Error:", error);
     return null;
   }
@@ -118,7 +139,7 @@ export const generateSpeech = async (text: string) => {
     const ai = getAI();
     // استخدام "Kore" مع توجيه دقيق لنبرة الثلاثينيات الجذابة
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
+      model: "gemini-3.1-flash-tts-preview",
       contents: [{ parts: [{ text: `بصوت امرأة جزائرية مثقفة في الثلاثينيات من عمرها، صوتها رزين، فائق الجمال، ومريح جداً للمستمع، تحدثي بلهجة جزائرية بيضاء مفهومة: ${text}` }] }],
       config: {
         responseModalities: [Modality.AUDIO],
@@ -131,7 +152,7 @@ export const generateSpeech = async (text: string) => {
     });
 
     return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("TTS Error:", error);
     return null;
   }
