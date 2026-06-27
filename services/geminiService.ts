@@ -20,13 +20,22 @@ export const multimodalAIChat = async (message: string, imageBase64?: string, pr
           text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير API_KEY في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
         };
       }
-      throw new Error(errData.text || "Network error");
+      if (response.status === 429 || errData.error === "QUOTA_EXCEEDED" || String(errData.text || "").includes("تم تجاوز الحصة")) {
+        return {
+          text: "تم تجاوز الحصة المجانية لـ Gemini، يرجى المحاولة لاحقاً."
+        };
+      }
+      throw new Error(errData.text || errData.error || "خطأ غير معروف في السيرفر");
     }
 
     return await response.json();
   } catch (error: any) {
     console.error("Gemini Error:", error);
-    return { text: "عذراً، واجهت VEX مشكلة في الاتصال. يرجى المحاولة لاحقاً." };
+    const errString = String(error?.message || error || "").toLowerCase();
+    if (errString.includes("429") || errString.includes("quota") || errString.includes("limit") || errString.includes("exhausted") || errString.includes("تم تجاوز الحصة")) {
+      return { text: "تم تجاوز الحصة المجانية لـ Gemini، يرجى المحاولة لاحقاً." };
+    }
+    return { text: error?.message || "خطأ غير معروف في السيرفر" };
   }
 };
 
@@ -112,15 +121,24 @@ export const decodeAudioData = async (
   sampleRate: number = 24000,
   numChannels: number = 1,
 ): Promise<AudioBuffer> => {
-  const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length / numChannels;
-  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+  try {
+    // Attempt standard browser decoding first (covers container formats like AAC, MP3, WAV)
+    const bufferCopy = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+    return await ctx.decodeAudioData(bufferCopy);
+  } catch (err) {
+    console.warn("Native browser decodeAudioData failed, falling back to manual PCM decoding:", err);
+    
+    // Fallback to manual 16-bit PCM decoding
+    const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
+    const frameCount = dataInt16.length / numChannels;
+    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
 
-  for (let channel = 0; channel < numChannels; channel++) {
-    const channelData = buffer.getChannelData(channel);
-    for (let i = 0; i < frameCount; i++) {
-      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    for (let channel = 0; channel < numChannels; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < frameCount; i++) {
+        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+      }
     }
+    return buffer;
   }
-  return buffer;
 };

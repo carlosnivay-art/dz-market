@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality } from "@google/genai";
 
 const app = express();
@@ -85,15 +84,63 @@ app.post("/api/gemini/chat", async (req, res) => {
       sources: response.candidates?.[0]?.groundingMetadata?.groundingChunks
     });
   } catch (error: any) {
-    console.error("Backend Chat Error:", error);
+    console.error("Backend Chat Error Details:", error);
+    
+    const errString = String(error?.message || error || "").toLowerCase();
+    const isQuotaExceeded = 
+      errString.includes("429") || 
+      errString.includes("quota") || 
+      errString.includes("limit") || 
+      errString.includes("resource_exhausted") || 
+      error?.status === 429 ||
+      error?.statusCode === 429;
+
     if (error?.message === "MISSING_API_KEY") {
       res.status(400).json({ 
         error: "MISSING_API_KEY",
         text: "⚠️ لم يتم العثور على مفتاح Gemini API. يرجى تهيئة المتغير API_KEY في إعدادات البيئة على Vercel لتفعيل المساعد الذكي VEX." 
       });
+    } else if (isQuotaExceeded) {
+      res.status(429).json({
+        error: "QUOTA_EXCEEDED",
+        text: "تم تجاوز الحصة المجانية لـ Gemini، يرجى المحاولة لاحقاً."
+      });
     } else {
-      res.status(500).json({ text: "عذراً، واجهت VEX مشكلة في الاتصال بالسيرفر. يرجى التأكد من تهيئة مفتاح API_KEY." });
+      res.status(500).json({ 
+        error: error?.message || "SERVER_ERROR",
+        text: error?.message || "عذراً، حدث خطأ في الخادم أثناء معالجة الطلب."
+      });
     }
+  }
+});
+
+app.get("/api/gemini/test", async (req, res) => {
+  try {
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "hi",
+    });
+    res.json({
+      status: "success",
+      message: "API Connection successful!",
+      responseRaw: response,
+      text: response.text
+    });
+  } catch (error: any) {
+    console.error("Backend Test Connection Error:", error);
+    res.status(500).json({
+      status: "error",
+      message: error?.message || "Unknown error",
+      errorDetails: error,
+      stack: error?.stack,
+      envKeysPresent: {
+        API_KEY: !!process.env.API_KEY,
+        GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+        VITE_API_KEY: !!process.env.VITE_API_KEY,
+        VITE_GEMINI_API_KEY: !!process.env.VITE_GEMINI_API_KEY,
+      }
+    });
   }
 });
 
@@ -237,7 +284,21 @@ app.post("/api/gemini/generate-speech", async (req, res) => {
       },
     });
 
-    const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
+    let audioBase64 = null;
+    const parts = response.candidates?.[0]?.content?.parts;
+    if (parts && Array.isArray(parts)) {
+      for (const part of parts) {
+        if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith("audio/")) {
+          audioBase64 = part.inlineData.data;
+          break;
+        }
+      }
+    }
+
+    if (!audioBase64 && parts && parts[0]?.inlineData?.data) {
+      audioBase64 = parts[0].inlineData.data;
+    }
+
     res.json({ audioBase64 });
   } catch (error: any) {
     console.error("Backend TTS Error:", error);
@@ -248,6 +309,7 @@ app.post("/api/gemini/generate-speech", async (req, res) => {
 // Serve frontend assets
 async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

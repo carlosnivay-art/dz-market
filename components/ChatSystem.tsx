@@ -33,8 +33,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
   
   // Audio context persistent for performance
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -44,6 +43,16 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping, selectedImage]);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+    };
+  }, []);
 
   const handleSend = async (textOverride?: string) => {
     const userMsg = textOverride || input;
@@ -81,28 +90,75 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
+  const startSpeechRecognition = () => {
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      alert("متصفحك لا يدعم التعرف على الصوت. يرجى استخدام متصفح Chrome أو Edge.");
+      return;
+    }
 
-      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
-      recorder.onstop = async () => {
-        handleSend("استفسار صوتي (جاري التحليل...)");
+    try {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+
+      const rec = new SpeechRecognitionAPI();
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.lang = 'ar-DZ';
+
+      rec.onstart = () => {
+        setIsRecording(true);
       };
 
-      recorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      alert("يرجى السماح بالوصول للميكروفون");
+      rec.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcriptSegment = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptSegment;
+          } else {
+            interimTranscript += transcriptSegment;
+          }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText.trim()) {
+          setInput(currentText);
+        }
+      };
+
+      rec.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("يرجى تفعيل صلاحية استخدام الميكروفون في المتصفح.");
+        }
+        setIsRecording(false);
+      };
+
+      rec.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (error) {
+      console.error("Error starting speech recognition:", error);
+      setIsRecording(false);
     }
   };
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error("Error stopping speech recognition:", e);
+      }
       setIsRecording(false);
     }
   };
@@ -120,6 +176,12 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
           audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
         }
         const ctx = audioCtxRef.current;
+        
+        // Resume context if suspended (Chrome / Edge restriction)
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
         const audioData = decodeAudio(audioBase64);
         const buffer = await decodeAudioData(audioData, ctx);
         const source = ctx.createBufferSource();
@@ -237,10 +299,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
            </button>
            <div className="h-6 w-[1px] bg-gray-200 dark:bg-gray-800 mx-1"></div>
            <button 
-             onMouseDown={startRecording}
-             onMouseUp={stopRecording}
-             onTouchStart={startRecording}
-             onTouchEnd={stopRecording}
+             onClick={isRecording ? stopSpeechRecognition : startSpeechRecognition}
              className={`p-3 rounded-2xl transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-gray-400 hover:text-dz-orange hover:bg-dz-orange/5'}`}
            >
              {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
