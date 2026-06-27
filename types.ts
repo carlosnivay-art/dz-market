@@ -49,6 +49,7 @@ export interface User {
   // Delivery Office specific optional fields
   coveredWilayas?: string[];
   deliveryPrices?: string; // Text description of prices or per-wilaya list
+  wilayaPrices?: Record<string, number>; // Dictionary of prices per wilaya
   ordersCount?: number;
   rating?: number;
   reviewsCount?: number;
@@ -145,5 +146,8 @@ export interface Order {
   paymentMethod: string;
   deliveryCompany?: string;
   deliveryPrice?: number;
+  driverName?: string;
+  driverPhone?: string;
+  trackingHistory?: string; // JSON or comma-separated tracking stages
 }
 

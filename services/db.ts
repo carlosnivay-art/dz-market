@@ -904,6 +904,14 @@ class DZDatabase {
     return true;
   }
 
+  updateOrder(orderId: string, updatedFields: Partial<Order>): boolean {
+    const idx = this.orders.findIndex(o => o.id === orderId);
+    if (idx === -1) return false;
+    this.orders[idx] = { ...this.orders[idx], ...updatedFields };
+    this.saveAll();
+    return true;
+  }
+
   // --- PARTNER STORE METHODS ---
   getPartnerStores(): User[] {
     return this.users.filter(u => u.role === 'partner_store');

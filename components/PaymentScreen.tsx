@@ -115,7 +115,51 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({ product, currentUser, onB
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
   // Filter companies based on current buyer and seller wilayas
-  const availableCompanies = DELIVERY_COMPANIES.filter(company => 
+  const dbOffices = db.getUsers()
+    .filter(u => u.role === 'delivery_office' && u.approvalStatus === 'approved')
+    .map(u => {
+      const matchedPrice = u.deliveryPrices?.match(/\d+/);
+      const parsedPrice = matchedPrice ? parseInt(matchedPrice[0], 10) : 500;
+      
+      let customPrice = parsedPrice;
+      if (u.wilayaPrices && buyerWilaya) {
+        const matchedKey = Object.keys(u.wilayaPrices).find(k => 
+          k.trim() === buyerWilaya.trim() || 
+          buyerWilaya.includes(k) || 
+          k.includes(buyerWilaya)
+        );
+        if (matchedKey && u.wilayaPrices[matchedKey]) {
+          customPrice = u.wilayaPrices[matchedKey];
+        }
+      }
+
+      return {
+        id: u.id,
+        name: u.name,
+        price: customPrice,
+        duration: '2-4 أيام',
+        rating: u.rating || 4.7,
+        icon: '🚚',
+        covers: (buyerWilaya: string, sellerWilaya: string) => {
+          if (!u.coveredWilayas || u.coveredWilayas.length === 0) return true;
+          const normB = buyerWilaya.toLowerCase().trim();
+          const normS = sellerWilaya.toLowerCase().trim();
+          const hasBuyer = u.coveredWilayas.some(w => {
+            const normW = w.toLowerCase().trim();
+            return normB.includes(normW) || normW.includes(normB);
+          });
+          const hasSeller = u.coveredWilayas.some(w => {
+            const normW = w.toLowerCase().trim();
+            return normS.includes(normW) || normW.includes(normS);
+          });
+          return hasBuyer && hasSeller;
+        }
+      };
+    });
+
+  const allCompanies = [...DELIVERY_COMPANIES, ...dbOffices];
+
+  const availableCompanies = allCompanies.filter(company => 
     company.covers(buyerWilaya, product.wilaya)
   );
 
