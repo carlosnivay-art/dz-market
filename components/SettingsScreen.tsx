@@ -66,6 +66,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [enableVex, setEnableVex] = useState(true);
   const [customizeSuggestions, setCustomizeSuggestions] = useState(true);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('custom_gemini_api_key') || '');
 
   // Security States
   const [enable2FA, setEnable2FA] = useState(false);
@@ -181,6 +182,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
       
       if (type === 'appearance') {
         onLangChange(tempLang);
+      }
+
+      if (type === 'ai') {
+        localStorage.setItem('custom_gemini_api_key', customApiKey.trim());
       }
       
       setIsSaving(false);
@@ -584,6 +589,38 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${enableVex ? 'right-7' : 'right-1'}`}></div>
              </button>
           </div>
+        </div>
+      </div>
+
+      {/* Custom Gemini API Key Card */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-[2rem] border border-dz-border dark:border-gray-700 card-shadow space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+           <KeyRound size={20} className="text-dz-green animate-pulse" />
+           <h4 className="font-black text-sm text-dz-text dark:text-gray-100">مفتاح API الخاص بك (Gemini Key)</h4>
+        </div>
+        <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
+          إذا واجهت مشكلة في الحصة المجانية لـ Gemini، يمكنك إدخال مفتاح API الخاص بك هنا. يتم حفظ المفتاح بأمان محلياً في متصفحك ويُرسل فقط إلى السيرفر لتفعيل خدمات الذكاء الاصطناعي.
+        </p>
+        <div className="space-y-3">
+          <input
+            type="password"
+            value={customApiKey}
+            onChange={(e) => setCustomApiKey(e.target.value)}
+            placeholder="أدخل مفتاح Gemini API (مثال: AIzaSy...)"
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-dz-border dark:border-gray-700 rounded-2xl text-xs text-right font-mono text-dz-text dark:text-white focus:outline-none focus:border-dz-green"
+          />
+          {customApiKey && (
+            <button
+              onClick={() => {
+                setCustomApiKey('');
+                localStorage.removeItem('custom_gemini_api_key');
+                alert('تم إزالة المفتاح المخصص وسيعود التطبيق لاستخدام مفتاح السيرفر الافتراضي.');
+              }}
+              className="text-[10px] text-red-500 font-bold hover:underline block mr-auto"
+            >
+              إزالة المفتاح المخصص وحذفه
+            </button>
+          )}
         </div>
       </div>
 

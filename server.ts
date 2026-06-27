@@ -10,27 +10,41 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
 // Helper to get GoogleGenAI client on the server
-const getAI = () => {
-  const keysToTry = [
-    process.env.API_KEY,
-    process.env.GEMINI_API_KEY,
-    process.env.VITE_API_KEY,
-    process.env.VITE_GEMINI_API_KEY
-  ];
-  
+const getAI = (req?: express.Request) => {
   let key = "";
-  for (const k of keysToTry) {
-    if (k) {
-      const cleaned = k.trim().replace(/^["']|["']$/g, '');
-      if (
-        cleaned && 
-        cleaned !== "PLACEHOLDER_API_KEY" && 
-        cleaned !== "your_gemini_api_key_here" && 
-        cleaned !== "your_api_key_here" &&
-        !cleaned.toLowerCase().includes("placeholder")
-      ) {
+
+  // Try custom API key passed from the client in headers first!
+  if (req) {
+    const customKey = req.headers["x-custom-api-key"] || req.headers["X-Custom-Api-Key"];
+    if (customKey && typeof customKey === "string") {
+      const cleaned = customKey.trim().replace(/^["']|["']$/g, '');
+      if (cleaned && !cleaned.toLowerCase().includes("placeholder") && cleaned !== "") {
         key = cleaned;
-        break;
+      }
+    }
+  }
+
+  if (!key) {
+    const keysToTry = [
+      process.env.API_KEY,
+      process.env.GEMINI_API_KEY,
+      process.env.VITE_API_KEY,
+      process.env.VITE_GEMINI_API_KEY
+    ];
+    
+    for (const k of keysToTry) {
+      if (k) {
+        const cleaned = k.trim().replace(/^["']|["']$/g, '');
+        if (
+          cleaned && 
+          cleaned !== "PLACEHOLDER_API_KEY" && 
+          cleaned !== "your_gemini_api_key_here" && 
+          cleaned !== "your_api_key_here" &&
+          !cleaned.toLowerCase().includes("placeholder")
+        ) {
+          key = cleaned;
+          break;
+        }
       }
     }
   }
@@ -52,7 +66,7 @@ const getAI = () => {
 app.post("/api/gemini/chat", async (req, res) => {
   try {
     const { message, imageBase64, product } = req.body;
-    const ai = getAI();
+    const ai = getAI(req);
     const model = "gemini-2.5-flash";
     
     const parts: any[] = [{ text: message }];
@@ -67,8 +81,8 @@ app.post("/api/gemini/chat", async (req, res) => {
     }
 
     const systemInstruction = product 
-      ? `أنتِ "VEX"، مساعدة مبيعات ذكية في الثلاثينيات من عمرك، تتميزين بالرقي واللطف. ساعدي المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن. أجيبي بصوت أنثوي ناضج، جذاب، وودود بلهجة جزائرية راقية.`
-      : `أنتِ "VEX"، المساعدة الذكية لمنصة DZ MARKET. عمركِ في الثلاثينيات، تتمتعين بشخصية مثقفة، رزينة وجذابة. صممكِ المهندس ضياف أيمن. مهمتكِ هي مرافقة المستخدمين في تجربة تسوق ممتعة. أجيبي دائماً بصوت أنثوي رزين ومريح للأذن، بلهجة جزائرية "بيضاء" مفهومة وأنيقة. استخدمي البحث في جوجل للمعلومات المحدثة.`;
+      ? `أنتِ "VEX"، مساعدة مبيعات ذكية في الثلاثينيات من عمرك، تتميزين بالرقي واللطف. تحدثي دائماً باللغة العربية بلهجة جزائرية بيضاء مفهومة وأنيقة. لا تستعملي الإنجليزية إلا إذا طلبها المستخدم صراحةً. أجيبي باختصار ووضوح وبطريقة مناسبة للمستخدم الجزائري. ساعدي المستخدم بخصوص منتج ${product.name}. السعر: ${product.price} دج. وصف: ${product.description}. المطور: ضياف أيمن.`
+      : `أنتِ "VEX"، المساعدة الذكية لمنصة DZ MARKET. عمركِ في الثلاثينيات، تتمتعين بشخصية مثقفة، رزينة وجذابة. صممكِ المهندس ضياف أيمن. مهمتكِ هي مرافقة المستخدمين في تجربة تسوق ممتعة. تحدثي دائماً باللغة العربية (اللهجة الجزائرية البيضاء المفهومة والأنيقة). لا تستعملي الإنجليزية إلا إذا طلبها المستخدم صراحةً. اجعلي جميع الردود قصيرة وواضحة ومناسبة للمستخدم الجزائري. استخدمي البحث في جوجل للمعلومات المحدثة.`;
 
     const response = await ai.models.generateContent({
       model: model,
@@ -103,7 +117,7 @@ app.post("/api/gemini/chat", async (req, res) => {
     } else if (isQuotaExceeded) {
       res.status(429).json({
         error: "QUOTA_EXCEEDED",
-        text: "تم تجاوز الحصة المجانية لـ Gemini، يرجى المحاولة لاحقاً."
+        text: "عذراً، الذكاء الاصطناعي غير متاح مؤقتاً. حاول مرة أخرى لاحقاً."
       });
     } else {
       res.status(500).json({ 
@@ -116,7 +130,7 @@ app.post("/api/gemini/chat", async (req, res) => {
 
 app.get("/api/gemini/test", async (req, res) => {
   try {
-    const ai = getAI();
+    const ai = getAI(req);
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: "hi",
@@ -147,7 +161,7 @@ app.get("/api/gemini/test", async (req, res) => {
 app.post("/api/gemini/suggest-caption", async (req, res) => {
   try {
     const { userText, imageBase64 } = req.body;
-    const ai = getAI();
+    const ai = getAI(req);
     const parts: any[] = [
       { text: `بصفتكِ خبيرة تسويق جزائرية في الثلاثينيات، حولي هذا المحتوى إلى منشور تسويقي احترافي وجذاب بلهجة جزائرية قريبة من القلب. النص: "${userText}"` }
     ];
@@ -170,14 +184,15 @@ app.post("/api/gemini/suggest-caption", async (req, res) => {
     res.json({ text: response.text });
   } catch (error: any) {
     console.error("Backend Post Suggestion Error:", error);
-    res.status(500).json({ text: req.body.userText || "" });
+    // Return 200 OK with the fallback userText so the application doesn't report a network error
+    res.json({ text: req.body.userText || "" });
   }
 });
 
 app.post("/api/gemini/generate-logo", async (req, res) => {
   try {
     const { prompt } = req.body;
-    const ai = getAI();
+    const ai = getAI(req);
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -204,7 +219,7 @@ app.post("/api/gemini/generate-logo", async (req, res) => {
     console.warn("Backend Logo Generation using image model failed or quota exceeded, using SVG fallback:", error.message || error);
     
     try {
-      const ai = getAI();
+      const ai = getAI(req);
       // Use gemini-2.5-flash to dynamically generate high-quality SVG code (free tier, no image generation quota limit)
       const svgResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -270,7 +285,7 @@ Guidelines:
 app.post("/api/gemini/generate-speech", async (req, res) => {
   try {
     const { text } = req.body;
-    const ai = getAI();
+    const ai = getAI(req);
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: [{ parts: [{ text: `بصوت امرأة جزائرية مثقفة في الثلاثينيات من عمرها، صوتها رزين، فائق الجمال، ومريح جداً للمستمع، تحدثي بلهجة جزائرية بيضاء مفهومة: ${text}` }] }],
@@ -302,7 +317,8 @@ app.post("/api/gemini/generate-speech", async (req, res) => {
     res.json({ audioBase64 });
   } catch (error: any) {
     console.error("Backend TTS Error:", error);
-    res.status(500).json({ audioBase64: null });
+    // Return 200 OK with null audioBase64 to allow the frontend to utilize browser-native speech synthesis fallback
+    res.json({ audioBase64: null });
   }
 });
 

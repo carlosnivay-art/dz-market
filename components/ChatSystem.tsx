@@ -21,9 +21,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: 'ai', 
-      text: activeProduct 
-        ? `مرحباً! أنا "VEX"، المساعد الذكي لـ DZ Market. يمكنك سؤالي كتابةً أو صوتاً، أو حتى إرسال صورة للمقارنة!`
-        : 'أهلاً بك في DZ Market! أنا "VEX". يمكنني فهم صورك، صوتك، وأسئلتك حول السوق الجزائري 🇩🇿' 
+      text: 'السلام عليكم! أنا VEX، مساعدك الذكي في DZ MARKET. كيف نقدر نعاونك اليوم؟' 
     }
   ]);
   const [input, setInput] = useState('');
@@ -200,7 +198,36 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ onClose, activeProduct }) => {
         setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
       }
     } else {
-      setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+      // Fallback to browser-native Speech Synthesis if API is rate-limited or unavailable
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ar-DZ';
+          
+          // Try to select an Arabic voice
+          const voices = window.speechSynthesis.getVoices();
+          const arVoice = voices.find(v => v.lang.startsWith('ar') || v.lang.includes('ar'));
+          if (arVoice) {
+            utterance.voice = arVoice;
+          }
+          
+          utterance.onend = () => {
+            setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+          };
+          
+          utterance.onerror = () => {
+            setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+          };
+          
+          window.speechSynthesis.speak(utterance);
+        } catch (synthError) {
+          console.error("Browser speech synthesis failed:", synthError);
+          setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+        }
+      } else {
+        setMessages(prev => prev.map((m, i) => i === index ? { ...m, isSpeaking: false } : m));
+      }
     }
   };
 
