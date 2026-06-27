@@ -17,15 +17,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onOpenD
         <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         
         {/* Badges - Smaller & Minimal */}
-        {product.isFastDelivery && (
-          <div className="absolute bottom-1 right-1 bg-dz-green/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-lg text-[8px] font-black flex items-center gap-0.5 shadow-sm">
-            <Truck size={8} /> 24h
-          </div>
-        )}
+        <div className="absolute bottom-1 right-1 flex flex-col gap-1 items-end">
+          {product.isFastDelivery && (
+            <div className="bg-dz-green/90 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-lg text-[8px] font-black flex items-center gap-0.5 shadow-sm">
+              <Truck size={8} /> 24h
+            </div>
+          )}
+          {product.returnPolicy && (
+            <div className={`backdrop-blur-sm text-white px-1.5 py-0.5 rounded-lg text-[8px] font-black shadow-sm ${
+              product.returnPolicy === 'none' ? 'bg-gray-500/90' : 'bg-dz-orange/90'
+            }`}>
+              {product.returnPolicy === 'none' ? 'لا إرجاع' : product.returnPolicy === '7days' ? 'إرجاع 7أ' : 'إرجاع 14أ'}
+            </div>
+          )}
+        </div>
         
         {product.isVerified && (
-          <div className="absolute top-1 right-1 bg-blue-500 text-white p-1 rounded-full shadow-sm">
-            <ShieldCheck size={10} />
+          <div className="absolute top-1 right-1 bg-dz-green text-white px-1.5 py-0.5 rounded-lg shadow-sm flex items-center gap-0.5 text-[8px] font-black">
+            <ShieldCheck size={10} fill="currentColor" /> موثوق
           </div>
         )}
       </div>
