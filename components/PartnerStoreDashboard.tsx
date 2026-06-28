@@ -3,7 +3,8 @@ import {
   Building2, Sparkles, ShoppingBag, Truck, BarChart3, Settings, 
   Plus, Eye, Trash2, CheckCircle, Clock, XCircle, Award, 
   TrendingUp, Wallet, ArrowUpRight, ShieldCheck, Mail, Phone, 
-  MapPin, Globe, Facebook, Instagram, Save, HelpCircle, AlertCircle, Star
+  MapPin, Globe, Facebook, Instagram, Save, HelpCircle, AlertCircle, Star,
+  ChevronRight, ChevronLeft
 } from 'lucide-react';
 import { User, Product, Order } from '../types';
 import { db } from '../services/db';
@@ -17,6 +18,9 @@ interface PartnerStoreDashboardProps {
 
 const PartnerStoreDashboard: React.FC<PartnerStoreDashboardProps> = ({ store, onLogout }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'subscription' | 'profile'>('stats');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => 
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
   
   // Db products & orders for this seller
   const [products, setProducts] = useState<Product[]>(() => db.getProducts().filter(p => p.sellerId === store.id));
@@ -132,90 +136,106 @@ const PartnerStoreDashboard: React.FC<PartnerStoreDashboardProps> = ({ store, on
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 font-['Cairo'] flex" dir="rtl">
-      {/* Sidebar Controls */}
-      <aside className="w-64 bg-white dark:bg-gray-900 border-l dark:border-gray-800 flex flex-col justify-between p-6">
-        <div className="space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2.5 rounded-2xl text-white">
-              <Building2 size={24} />
+      {/* Sidebar Wrapper for collapsing transition & absolute button */}
+      <div className={`relative flex shrink-0 transition-all duration-300 ease-in-out ${
+        isSidebarCollapsed ? 'w-0' : 'w-64'
+      }`}>
+        {/* Sidebar Controls */}
+        <aside className={`w-full bg-white dark:bg-gray-900 border-l dark:border-gray-800 flex flex-col justify-between transition-all duration-300 ease-in-out h-screen sticky top-0 ${
+          isSidebarCollapsed ? 'p-0 border-l-0 overflow-hidden opacity-0 pointer-events-none' : 'p-6 opacity-100'
+        }`}>
+          <div className="space-y-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-600 p-2.5 rounded-2xl text-white">
+                <Building2 size={24} />
+              </div>
+              <div>
+                <h1 className="text-sm font-black text-dz-text dark:text-white leading-tight">شريك DZ MARKET</h1>
+                <span className="text-[10px] text-indigo-600 font-bold">بوابة أعمال الشركات</span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-sm font-black text-dz-text dark:text-white leading-tight">شريك DZ MARKET</h1>
-              <span className="text-[10px] text-indigo-600 font-bold">بوابة أعمال الشركات</span>
-            </div>
+
+            <nav className="space-y-1.5">
+              <button 
+                onClick={() => setActiveTab('stats')}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
+                  activeTab === 'stats' 
+                    ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
+                }`}
+              >
+                <BarChart3 size={16} />
+                <span>إحصائيات المبيعات</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('products')}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
+                  activeTab === 'products' 
+                    ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
+                }`}
+              >
+                <ShoppingBag size={16} />
+                <span>كتالوج المنتجات</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('orders')}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 relative ${
+                  activeTab === 'orders' 
+                    ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
+                }`}
+              >
+                <Truck size={16} />
+                <span>طلبات العملاء</span>
+                {pendingCount > 0 && (
+                  <span className="absolute left-4 bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+              <button 
+                onClick={() => setActiveTab('subscription')}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
+                  activeTab === 'subscription' 
+                    ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
+                }`}
+              >
+                <Award size={16} />
+                <span>الاشتراك وعمولات الصفر</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('profile')}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
+                  activeTab === 'profile' 
+                    ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
+                    : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
+                }`}
+              >
+                <Settings size={16} />
+                <span>إعدادات الشركة</span>
+              </button>
+            </nav>
           </div>
 
-          <nav className="space-y-1.5">
-            <button 
-              onClick={() => setActiveTab('stats')}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
-                activeTab === 'stats' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
-              }`}
-            >
-              <BarChart3 size={16} />
-              <span>إحصائيات المبيعات</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('products')}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
-                activeTab === 'products' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
-              }`}
-            >
-              <ShoppingBag size={16} />
-              <span>كتالوج المنتجات</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('orders')}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 relative ${
-                activeTab === 'orders' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
-              }`}
-            >
-              <Truck size={16} />
-              <span>طلبات العملاء</span>
-              {pendingCount > 0 && (
-                <span className="absolute left-4 bg-orange-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-            <button 
-              onClick={() => setActiveTab('subscription')}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
-                activeTab === 'subscription' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
-              }`}
-            >
-              <Award size={16} />
-              <span>الاشتراك وعمولات الصفر</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('profile')}
-              className={`w-full py-3.5 px-4 rounded-2xl font-black text-xs text-right transition-all flex items-center gap-3 ${
-                activeTab === 'profile' 
-                  ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600' 
-                  : 'text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-600'
-              }`}
-            >
-              <Settings size={16} />
-              <span>إعدادات الشركة</span>
-            </button>
-          </nav>
-        </div>
+          <button 
+            onClick={onLogout}
+            className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-950/10 dark:hover:bg-red-950/20 text-red-600 py-3.5 rounded-2xl font-black text-xs transition-colors flex items-center justify-center gap-2"
+          >
+            <span>تسجيل خروج</span>
+          </button>
+        </aside>
 
-        <button 
-          onClick={onLogout}
-          className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-950/10 dark:hover:bg-red-950/20 text-red-600 py-3.5 rounded-2xl font-black text-xs transition-colors flex items-center justify-center gap-2"
+        {/* Toggle Button in the center of the sidebar border */}
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute top-1/2 -translate-y-1/2 left-0 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 w-8 h-12 rounded-r-none rounded-l-xl border-y border-l border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-lg transition-all hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/10 focus:outline-none cursor-pointer"
+          title={isSidebarCollapsed ? "إظهار القائمة" : "إخفاء القائمة"}
         >
-          <span>تسجيل خروج</span>
+          {isSidebarCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
-      </aside>
+      </div>
 
       {/* Main Panel Content */}
       <main className="flex-1 overflow-y-auto p-8 space-y-8">
