@@ -227,10 +227,10 @@ const PartnerStoreDashboard: React.FC<PartnerStoreDashboardProps> = ({ store, on
           </button>
         </aside>
 
-        {/* Toggle Button in the center of the sidebar border */}
+        {/* Toggle Button at the top of the sidebar border */}
         <button
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="absolute top-1/2 -translate-y-1/2 left-0 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 w-8 h-12 rounded-r-none rounded-l-xl border-y border-l border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-lg transition-all hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/10 focus:outline-none cursor-pointer"
+          className="absolute top-6 left-0 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 w-8 h-12 rounded-r-none rounded-l-xl border-y border-l border-gray-200 dark:border-gray-800 flex items-center justify-center shadow-lg transition-all hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/10 focus:outline-none cursor-pointer"
           title={isSidebarCollapsed ? "إظهار القائمة" : "إخفاء القائمة"}
         >
           {isSidebarCollapsed ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
